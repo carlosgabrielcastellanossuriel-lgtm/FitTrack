@@ -83,6 +83,4 @@ flowchart TB
     RA -->|"Lee métricas agrupadas"| DB
     AUD -->|"Guarda trazas de auditoría inmutables"| DB
     GN -->|"Guarda alimentos, registros y resúmenes diarios"| DB
-
-    end
 ```
