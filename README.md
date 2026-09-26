@@ -1,11 +1,10 @@
 # FitTrack
 
-                  *********** Diagrama de flujo ***********
-
+**Diagrama de flujo**
 ```mermaid
 flowchart TD
     subgraph Usuario_Core ["1. Onboarding (Usuario)"]
-        A[Registro de Usuario] --> B[Cálculo de Metas: Calorías y Macros]
+        A[Registro de Usuario] --> B[Cálculo de Metas: Calorías, Proteínas, Carbohidratos y Grasas]
     end
 
     subgraph Catálogo_Alimentos ["2. Gestión de Alimentos (Alimento)"]
@@ -18,7 +17,7 @@ flowchart TD
 
     subgraph Consumo ["3. Registro de Comida (RegistroComida)"]
         D --> G[Crear RegistroComida]
-        G --> H[Calcular Calorías Totales de la Porción]
+        G --> H[Calcular Calorías y Macros Totales de la Porción]
     end
 
     subgraph Resumen_Diario ["4. Resumen Diario & Máquina de Estados (ResumenDiario)"]
@@ -28,7 +27,7 @@ flowchart TD
         J --> K
         
         K --> L[Estado: En Progreso]
-        L --> M{Evaluación: ¿Excede Meta?}
+        L --> M{Evaluación: ¿Excede Meta de Calorías, Proteínas, Carbohidratos o Grasas?}
         M -->|No| N[Estado: Dentro De Meta]
         M -->|Sí| O[Estado: Excedido]
         O -->|Dispara| P[Notificación de Alerta]
@@ -46,9 +45,7 @@ flowchart TD
     end
 ```
 
-
-                  *********** Diagrama Componentes ***********
-
+**Diagrama Componentes**
 ```mermaid
 flowchart TB
     subgraph WebAPI ["Contenedor: Web API (.NET)"]
@@ -74,6 +71,7 @@ flowchart TB
     GN -->|"Consulta usuario activo mediante IControlAcceso"| CA
     GN -->|"Dispara alertas calóricas mediante INotificaciones"| N
     GN -->|"Registra cierre de día y cambios mediante IAuditoria"| AUD
+    GN -->|"Solicita dashboard y resumen histórico mediante IReportes"| RA
 
     %% Persistencia (Base de Datos fuera del contenedor)
     CA -->|"Guarda usuarios y hashes de clave"| DB
@@ -83,4 +81,60 @@ flowchart TB
     RA -->|"Lee métricas agrupadas"| DB
     AUD -->|"Guarda trazas de auditoría inmutables"| DB
     GN -->|"Guarda alimentos, registros y resúmenes diarios"| DB
+```
+
+**Diagrama Entidad-Relación**
+```mermaid
+erDiagram
+    Usuario {
+        int Id PK
+        varchar Nombre
+        int Edad
+        float Peso
+        float Altura
+        varchar MetaNutricional
+        int CaloriasMeta
+        float ProteinaMeta
+        float CarbohidratosMeta
+        float GrasasMeta
+    }
+
+    Alimento {
+        int Id PK
+        varchar Nombre
+        float CantidadCalorias "Base 100g"
+        float CantidadProteina "Base 100g"
+        float CantidadCarbohidratos "Base 100g"
+        float CantidadGrasas "Base 100g"
+        boolean EsBasico
+        int UsuarioCreadorId FK "Nulo si es basico"
+    }
+
+    ResumenDiario {
+        int Id PK
+        int UsuarioId FK
+        date Fecha
+        float CaloriasAcumuladas
+        float ProteinasAcumuladas
+        float CarbohidratosAcumulados
+        float GrasasAcumuladas
+        varchar EstadoActual
+    }
+
+    RegistroComida {
+        int Id PK
+        int ResumenDiarioId FK
+        int AlimentoId FK
+        float CantidadConsumida "Gramos"
+        float CaloriasTotales
+        float CantidadProteina
+        float CantidadCarbohidratos
+        float CantidadGrasas
+    }
+
+    %% Relaciones
+    Usuario |o--o{ Alimento : "crea (alimentos personalizados)"
+    Usuario ||--o{ ResumenDiario : "tiene"
+    ResumenDiario ||--o{ RegistroComida : "contiene"
+    Alimento ||--o{ RegistroComida : "se registra en"
 ```
