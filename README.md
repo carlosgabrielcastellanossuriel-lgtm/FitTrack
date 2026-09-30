@@ -4,6 +4,8 @@
 
 A través de un catálogo interactivo de alimentos —que integra opciones predeterminadas e ítems personalizados—, FitTrack permite registrar las porciones consumidas durante el día. El sistema consolida los datos en tiempo real, alerta mediante notificaciones cuando se alcanza o supera el tope diario, y ofrece un panel de control para consultar el consumo actual y el historial.
 
+FitTrack es exactamente lo que necesitas!!
+
 ---
 
 ## Entidades Principales
