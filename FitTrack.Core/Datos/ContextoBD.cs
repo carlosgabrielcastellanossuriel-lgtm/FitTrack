@@ -13,7 +13,7 @@ public class ContextoBD : DbContext
     public DbSet<CorreoEnCola> CorreosEnCola => Set<CorreoEnCola>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<TokenActivacion> TokensActivacion => Set<TokenActivacion>();
-
+    public DbSet<Sesion> Sesiones => Set<Sesion>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<CorreoEnCola>(e =>
@@ -37,5 +37,7 @@ public class ContextoBD : DbContext
             e.Property(t => t.Token).HasMaxLength(100);
             e.HasIndex(t => t.Token).IsUnique();
         });
+
+
     }
 }
