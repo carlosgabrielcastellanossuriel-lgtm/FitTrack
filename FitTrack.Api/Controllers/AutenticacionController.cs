@@ -77,8 +77,8 @@ public class AutenticacionController : ControllerBase
         // El atributo ya validó la sesión y dejó el usuario aquí.
         Usuario usuario = (Usuario)HttpContext.Items["Usuario"]!;
 
-        // Solo se devuelven datos seguros: nunca el hash. (El rol se agrega en la Parte 6.)
-        return Ok(new { usuario.Id, usuario.Correo, usuario.Activo });
+        // Solo se devuelven datos seguros: nunca el hash.
+        return Ok(new { usuario.Id, usuario.Correo, usuario.Activo, Rol = usuario.Rol.ToString() });
     }
 
     // POST /api/auth/logout   (RF-CA-18)
