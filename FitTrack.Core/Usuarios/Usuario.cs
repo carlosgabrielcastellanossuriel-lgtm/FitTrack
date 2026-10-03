@@ -9,4 +9,6 @@ public class Usuario
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
     public int IntentosFallidos { get; set; } = 0;     // fallos seguidos (RF-CA-19)
     public DateTime? BloqueadoHasta { get; set; }      // si tiene fecha futura, está bloqueado}
+
+    public Rol Rol { get; set; } = Rol.Estandar;    // todo usuario nuevo es Estándar
 }
