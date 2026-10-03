@@ -10,7 +10,7 @@ namespace FitTrack.Api.Seguridad;
 // Si no, responde 401 y el endpoint ni se ejecuta.
 public class RequiereSesionAttribute : Attribute, IAsyncAuthorizationFilter
 {
-    public async Task OnAuthorizationAsync(AuthorizationFilterContext context)
+    public virtual async Task OnAuthorizationAsync(AuthorizationFilterContext context)
     {
         // El cliente manda:  Authorization: Bearer <token>
         string cabecera = context.HttpContext.Request.Headers.Authorization.ToString();
