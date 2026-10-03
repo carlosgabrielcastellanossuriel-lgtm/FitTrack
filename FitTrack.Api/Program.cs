@@ -11,6 +11,7 @@ builder.Services.AddDbContext<ContextoBD>(options => options.UseSqlServer(builde
 builder.Services.AddScoped<ServicioColaCorreo>();
 builder.Services.AddScoped<ServicioRegistro>();
 builder.Services.AddScoped<ServicioSesion>();
+builder.Services.AddScoped<ServicioContrasena>();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
