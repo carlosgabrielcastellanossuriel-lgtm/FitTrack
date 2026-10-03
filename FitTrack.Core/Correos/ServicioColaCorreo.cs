@@ -4,13 +4,13 @@ namespace FitTrack.Core.Correos;
 
 // El "buzón": solo deja una carta (una fila) en la tabla CorreosEnCola.
 // No envía nada. El envío lo hace el proyecto FitTrack.Enviador.
-public class ColaCorreosService
+public class ServicioColaCorreo
 {
     // Conexión a la base de datos. Se la entrega .NET automáticamente
     // (inyección de dependencias), por eso se pide en el constructor.
     private readonly ContextoBD _db;
 
-    public ColaCorreosService(ContextoBD db)
+    public ServicioColaCorreo(ContextoBD db)
     {
         _db = db;
     }

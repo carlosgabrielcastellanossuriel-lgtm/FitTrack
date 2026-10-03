@@ -19,8 +19,4 @@
     <ProjectReference Include="..\FitTrack.Negocio\FitTrack.Negocio.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\" />
-  </ItemGroup>
-
 </Project>
