@@ -1,5 +1,6 @@
 ﻿using FitTrack.Core.Usuarios;
 using Microsoft.AspNetCore.Mvc;
+using FitTrack.Api.Seguridad;
 
 namespace FitTrack.Api.Controllers;
 
@@ -10,10 +11,12 @@ namespace FitTrack.Api.Controllers;
 public class AutenticacionController : ControllerBase
 {
     private readonly ServicioRegistro _registro;
+    private readonly ServicioSesion _sesion;
 
-    public AutenticacionController(ServicioRegistro registro)
+    public AutenticacionController(ServicioRegistro registro, ServicioSesion sesion)
     {
         _registro = registro;
+        _sesion = sesion;
     }
 
     // POST /api/auth/registro
@@ -53,6 +56,41 @@ public class AutenticacionController : ControllerBase
         // SIEMPRE la misma respuesta, exista el correo o no (RF-CA-17).
         return Ok(new { mensaje = "Si el correo está registrado y sin activar, enviaremos un nuevo enlace." });
     }
+
+    // POST /api/auth/login
+    [HttpPost("login")]
+    public async Task<IActionResult> IniciarSesion(LoginDto dto)
+    {
+        Resultado r = await _sesion.IniciarSesionAsync(dto.Correo, dto.Clave);
+
+        if (!r.Exito)
+            return Unauthorized(new { mensaje = r.Mensaje });   // 401
+
+        return Ok(new { mensaje = r.Mensaje, token = r.Token });
+    }
+
+    // GET /api/auth/yo   -> quién soy (RF-CA-07)
+    [RequiereSesion]
+    [HttpGet("yo")]
+    public IActionResult QuienSoy()
+    {
+        // El atributo ya validó la sesión y dejó el usuario aquí.
+        Usuario usuario = (Usuario)HttpContext.Items["Usuario"]!;
+
+        // Solo se devuelven datos seguros: nunca el hash. (El rol se agrega en la Parte 6.)
+        return Ok(new { usuario.Id, usuario.Correo, usuario.Activo });
+    }
+
+    // POST /api/auth/logout   (RF-CA-18)
+    [RequiereSesion]
+    [HttpPost("logout")]
+    public async Task<IActionResult> CerrarSesion()
+    {
+        string token = (string)HttpContext.Items["Token"]!;
+        await _sesion.CerrarSesionAsync(token);
+        return Ok(new { mensaje = "Sesión cerrada." });
+    }
+
 }
 
 // Los "moldes" del JSON que llega en el cuerpo de la petición.
@@ -65,4 +103,10 @@ public class RegistroDto
 public class ReenvioDto
 {
     public string Correo { get; set; } = string.Empty;
+}
+
+public class LoginDto
+{
+    public string Correo { get; set; } = string.Empty;
+    public string Clave { get; set; } = string.Empty;
 }
