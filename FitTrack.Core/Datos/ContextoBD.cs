@@ -14,6 +14,8 @@ public class ContextoBD : DbContext
     public DbSet<Usuario> Usuarios => Set<Usuario>();
     public DbSet<TokenActivacion> TokensActivacion => Set<TokenActivacion>();
     public DbSet<Sesion> Sesiones => Set<Sesion>();
+
+    public DbSet<TokenRecuperacion> TokensRecuperacion => Set<TokenRecuperacion>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<CorreoEnCola>(e =>
@@ -38,6 +40,11 @@ public class ContextoBD : DbContext
             e.HasIndex(t => t.Token).IsUnique();
         });
 
+        modelBuilder.Entity<TokenRecuperacion>(e =>
+        {
+            e.Property(t => t.Codigo).HasMaxLength(100);
+            e.HasIndex(t => t.Codigo).IsUnique();
+        });
 
     }
 }
