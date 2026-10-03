@@ -12,11 +12,19 @@ builder.Services.AddScoped<ServicioColaCorreo>();
 builder.Services.AddScoped<ServicioRegistro>();
 builder.Services.AddScoped<ServicioSesion>();
 builder.Services.AddScoped<ServicioContrasena>();
+builder.Services.AddScoped<ServicioAdministracion>();
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 var app = builder.Build();
+
+// Crea el primer Administrador si existen las variables de entorno (ver README).
+using (IServiceScope scope = app.Services.CreateScope())
+{
+    ServicioAdministracion administracion = scope.ServiceProvider.GetRequiredService<ServicioAdministracion>();
+    await administracion.CrearAdministradorInicialAsync();
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
