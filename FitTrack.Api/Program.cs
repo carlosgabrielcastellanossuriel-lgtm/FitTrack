@@ -1,13 +1,15 @@
-using FitTrack.Core.Datos;
-using Microsoft.EntityFrameworkCore;
 using FitTrack.Core.Correos;
+using FitTrack.Core.Datos;
+using FitTrack.Core.Usuarios;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddDbContext<ContextoBD>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddScoped<ColaCorreosService>();
+builder.Services.AddScoped<ServicioColaCorreo>();
+builder.Services.AddScoped<ServicioRegistro>();
 
 
 builder.Services.AddControllers();
@@ -19,7 +21,7 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-}
+} 
 
 app.UseHttpsRedirection();
 
