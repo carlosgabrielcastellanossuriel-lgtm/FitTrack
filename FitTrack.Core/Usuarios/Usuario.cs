@@ -7,5 +7,6 @@ public class Usuario
     public string ContrasenaHash { get; set; } = string.Empty;  // NUNCA la contraseña real
     public bool Activo { get; set; } = false;                   // nace inactivo (RF-CA-15)
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
-    // El Rol se agrega en la Parte 6.
+    public int IntentosFallidos { get; set; } = 0;     // fallos seguidos (RF-CA-19)
+    public DateTime? BloqueadoHasta { get; set; }      // si tiene fecha futura, está bloqueado}
 }
