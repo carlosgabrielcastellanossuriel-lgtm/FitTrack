@@ -2,6 +2,9 @@ using FitTrack.Core.Correos;
 using FitTrack.Core.Datos;
 using FitTrack.Core.Usuarios;
 using Microsoft.EntityFrameworkCore;
+using FitTrack.Negocio.Resumenes;
+// Le dice al contexto que ResumenDiario (del proyecto Negocio) también es una tabla.
+ContextoBD.EntidadesNegocio.Add(typeof(ResumenDiario));
 
 var builder = WebApplication.CreateBuilder(args);
 

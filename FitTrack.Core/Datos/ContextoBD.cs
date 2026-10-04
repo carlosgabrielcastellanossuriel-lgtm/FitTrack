@@ -16,6 +16,10 @@ public class ContextoBD : DbContext
     public DbSet<Sesion> Sesiones => Set<Sesion>();
 
     public DbSet<TokenRecuperacion> TokensRecuperacion => Set<TokenRecuperacion>();
+
+    // Entidades de otros proyectos (como Negocio) que Core no puede ver directamente.
+    // La Api las agrega al arrancar y aquí se registran como tablas.
+    public static List<Type> EntidadesNegocio { get; } = new List<Type>();
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<CorreoEnCola>(e =>
@@ -45,6 +49,11 @@ public class ContextoBD : DbContext
             e.Property(t => t.Codigo).HasMaxLength(100);
             e.HasIndex(t => t.Codigo).IsUnique();
         });
+
+        foreach (Type tipo in EntidadesNegocio)
+        {
+            modelBuilder.Entity(tipo);   // "este tipo también es una tabla"
+        }
 
     }
 }
