@@ -3,6 +3,8 @@ using FitTrack.Core.Datos;
 using FitTrack.Core.Usuarios;
 using Microsoft.EntityFrameworkCore;
 using FitTrack.Negocio.Resumenes;
+using Microsoft.OpenApi;
+
 // Le dice al contexto que ResumenDiario (del proyecto Negocio) también es una tabla.
 ContextoBD.EntidadesNegocio.Add(typeof(ResumenDiario));
 
@@ -18,11 +20,45 @@ builder.Services.AddScoped<ServicioContrasena>();
 builder.Services.AddScoped<ServicioAdministracion>();
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+
+                    // SWAGGER
+
+// Genera el documento que describe los endpoints.
+// El "transformer" le agrega la opción de mandar un token Bearer,
+// para poder probar en Swagger los endpoints que exigen sesión.
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    {
+        // Declara que existe un esquema de seguridad llamado "Bearer".
+        // Esto hace aparecer el botón "Authorize" en la página.
+        document.Components ??= new OpenApiComponents();
+        document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
+        {
+            ["Bearer"] = new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer"
+            }
+        };
+
+        // Lo aplica a todos los endpoints: si guardas el token una vez,
+        // Swagger lo manda en cada petición.
+        foreach (var operacion in document.Paths.Values.SelectMany(ruta => ruta.Operations!))
+        {
+            operacion.Value.Security ??= [];
+            operacion.Value.Security.Add(new OpenApiSecurityRequirement
+            {
+                [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+            });
+        }
+
+        return Task.CompletedTask;
+    });
+});
 var app = builder.Build();
 
-// Crea el primer Administrador si existen las variables de entorno (ver README).
+// Crea el primer Administrador si existen las variables de entorno.
 using (IServiceScope scope = app.Services.CreateScope())
 {
     ServicioAdministracion administracion = scope.ServiceProvider.GetRequiredService<ServicioAdministracion>();
@@ -33,6 +69,12 @@ using (IServiceScope scope = app.Services.CreateScope())
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+
+    // La página de Swagger. Solo en modo Development.
+    app.UseSwaggerUI(opciones =>
+    {
+        opciones.SwaggerEndpoint("/openapi/v1.json", "FitTrack v1");
+    });
 }
 
 // Manejador global de errores (RD-08).
