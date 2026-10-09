@@ -1,6 +1,6 @@
 ## FitTrack
 
-**FitTrack** es un gestor de calorías y macronutrientes diseñado para brindar un control claro y preciso sobre la alimentación diaria. El sistema evalúa y calcula metas calóricas y de macronutrientes (proteínas, carbohidratos y grasas) personalizadas a partir de los datos del perfil del usuario (peso, altura, edad y objetivo nutricional: déficit, superávit o mantenimiento).
+**FitTrack** es un gestor de calorías y macronutrientes diseñado para brindar un control claro y preciso sobre la alimentación diaria. El sistema evalúa y calcula metas calóricas y de macronutrientes (proteínas, carbohidratos y grasas) personalizadas a partir de los datos del perfil del usuario (peso, altura, edad, sexo, nivel de actividad y objetivo nutricional: déficit, superávit o mantenimiento).
 
 A través de un catálogo interactivo de alimentos —que integra opciones predeterminadas e ítems personalizados—, FitTrack permite registrar las porciones consumidas durante el día. El sistema consolida los datos en tiempo real, alerta mediante notificaciones cuando se alcanza o supera el tope diario, y ofrece un panel de control para consultar el consumo actual y el historial.
 
@@ -8,7 +8,9 @@ A través de un catálogo interactivo de alimentos —que integra opciones prede
 
 ## Entidades Principales
 
-* **Usuario:** Representa el perfil, almacenando datos antropométricos y las metas calculadas de calorías y macronutrientes.
+* **Usuario:** Representa la cuenta de acceso: correo, contraseña (almacenada como hash), rol y estado de la cuenta.
+
+* **PerfilUsuario:** Almacena los datos antropométricos y de estilo de vida del usuario (edad, peso, altura, sexo y nivel de actividad), su objetivo nutricional y las metas calculadas de calorías y macronutrientes.
 
 * **Alimento:** Catálogo de insumos nutricionales (básicos y personalizados) con sus valores de calorías, proteínas, carbohidratos y grasas.
 
@@ -37,7 +39,7 @@ A través de un catálogo interactivo de alimentos —que integra opciones prede
 ### Pasos de Instalación
 ```bash
 
-git clone [https://github.com/carlosgabrielcastellanossuriel-lgtm/FitTrack.git](https://github.com/carlosgabrielcastellanossuriel-lgtm/FitTrack.git)
+git clone https://github.com/carlosgabrielcastellanossuriel-lgtm/FitTrack.git
 
 cd FitTrack
 
@@ -83,8 +85,9 @@ dotnet run
 ## Diagrama de flujo
 ```mermaid
 flowchart TD
-    subgraph Usuario_Core ["1. Onboarding (Usuario)"]
-        A[Registro de Usuario] --> B[Cálculo de Metas: Calorías, Proteínas, Carbohidratos y Grasas]
+    subgraph Usuario_Core ["1. Onboarding (Usuario y Perfil)"]
+        A[Registro de Usuario] --> A2["Completar perfil (peso, altura, edad, sexo, nivel de actividad y objetivo)"]
+        A2 --> B[Cálculo de Metas: Calorías, Proteínas, Carbohidratos y Grasas]
     end
 
     subgraph Catálogo_Alimentos ["2. Gestión de Alimentos (Alimento)"]
@@ -160,7 +163,7 @@ flowchart TB
     N -->|"Guarda historial de alertas"| DB
     RA -->|"Lee métricas agrupadas"| DB
     AUD -->|"Guarda trazas de auditoría inmutables"| DB
-    GN -->|"Guarda alimentos, registros y resúmenes diarios"| DB
+    GN -->|"Guarda perfiles, alimentos, registros y resúmenes diarios"| DB
 ```
 
 **Diagrama Entidad-Relación**
@@ -168,11 +171,24 @@ flowchart TB
 erDiagram
     Usuario {
         int Id PK
-        varchar Nombre
+        varchar Correo "Siempre en minusculas, unico"
+        varchar ContrasenaHash "Nunca la clave real"
+        boolean Activo
+        int Rol "Enum: Estandar o Administrador"
+        datetime FechaCreacion
+        int IntentosFallidos
+        datetime BloqueadoHasta "Nulo si no esta bloqueado"
+    }
+
+    PerfilUsuario {
+        int Id PK
+        int UsuarioId FK "Unico: un perfil por usuario"
         int Edad
-        float Peso
-        float Altura
-        varchar MetaNutricional
+        float Peso "kg"
+        float Altura "cm"
+        int Sexo "Enum"
+        int NivelActividad "Enum"
+        int Objetivo "Enum: Deficit, Mantenimiento o Superavit"
         int CaloriasMeta
         float ProteinaMeta
         float CarbohidratosMeta
@@ -213,6 +229,7 @@ erDiagram
     }
 
     %% Relaciones
+    Usuario ||--o| PerfilUsuario : "tiene"
     Usuario |o--o{ Alimento : "crea (alimentos personalizados)"
     Usuario ||--o{ ResumenDiario : "tiene"
     ResumenDiario ||--o{ RegistroComida : "contiene"
