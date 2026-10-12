@@ -1,8 +1,9 @@
 using FitTrack.Core.Correos;
 using FitTrack.Core.Datos;
 using FitTrack.Core.Usuarios;
-using Microsoft.EntityFrameworkCore;
+using FitTrack.Negocio.Perfiles;
 using FitTrack.Negocio.Resumenes;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 
 // Le dice al contexto que ResumenDiario (del proyecto Negocio) también es una tabla.
@@ -18,6 +19,8 @@ builder.Services.AddScoped<ServicioRegistro>();
 builder.Services.AddScoped<ServicioSesion>();
 builder.Services.AddScoped<ServicioContrasena>();
 builder.Services.AddScoped<ServicioAdministracion>();
+ContextoBD.EntidadesNegocio.Add(typeof(PerfilUsuario));// Le dice a EF que PerfilUsuario (del proyecto Negocio) también es una tabla.
+builder.Services.AddScoped<ServicioPerfil>();
 
 builder.Services.AddControllers();
 
