@@ -194,6 +194,55 @@ namespace FitTrack.Core.Migrations
                     b.ToTable("Usuarios");
                 });
 
+            modelBuilder.Entity("FitTrack.Negocio.Perfiles.PerfilUsuario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("Altura")
+                        .HasColumnType("float");
+
+                    b.Property<int>("CaloriasMeta")
+                        .HasColumnType("int");
+
+                    b.Property<double>("CarbohidratosMeta")
+                        .HasColumnType("float");
+
+                    b.Property<int>("Edad")
+                        .HasColumnType("int");
+
+                    b.Property<double>("GrasasMeta")
+                        .HasColumnType("float");
+
+                    b.Property<int>("NivelActividad")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Objetivo")
+                        .HasColumnType("int");
+
+                    b.Property<double>("Peso")
+                        .HasColumnType("float");
+
+                    b.Property<double>("ProteinaMeta")
+                        .HasColumnType("float");
+
+                    b.Property<int>("Sexo")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId")
+                        .IsUnique();
+
+                    b.ToTable("PerfilUsuario");
+                });
+
             modelBuilder.Entity("FitTrack.Negocio.Resumenes.ResumenDiario", b =>
                 {
                     b.Property<int>("Id")
@@ -253,6 +302,17 @@ namespace FitTrack.Core.Migrations
                 });
 
             modelBuilder.Entity("FitTrack.Core.Usuarios.TokenRecuperacion", b =>
+                {
+                    b.HasOne("FitTrack.Core.Usuarios.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("FitTrack.Negocio.Perfiles.PerfilUsuario", b =>
                 {
                     b.HasOne("FitTrack.Core.Usuarios.Usuario", "Usuario")
                         .WithMany()
