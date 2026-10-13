@@ -5,6 +5,7 @@ using FitTrack.Negocio.Perfiles;
 using FitTrack.Negocio.Resumenes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
+using System.Text.Json.Serialization;
 
 // Le dice al contexto que ResumenDiario (del proyecto Negocio) también es una tabla.
 ContextoBD.EntidadesNegocio.Add(typeof(ResumenDiario));
@@ -24,7 +25,14 @@ builder.Services.AddScoped<ServicioPerfil>();
 
 builder.Services.AddControllers();
 
-                    // SWAGGER
+                // SWAGGER
+
+// Hace que los números se describan solo como números (no "número o texto").
+// Así Swagger UI reconoce bien los campos de la ruta, como el {id}.
+builder.Services.ConfigureHttpJsonOptions(opciones =>
+{
+    opciones.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
+});
 
 // Genera el documento que describe los endpoints.
 // El "transformer" le agrega la opción de mandar un token Bearer,
