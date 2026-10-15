@@ -35,9 +35,7 @@ public class ServicioContrasena
     public async Task EnviarCodigoAsync(Usuario usuario)
     {
         // Se anulan los códigos anteriores sin usar: solo vale el último.
-        List<TokenRecuperacion> anteriores = await _db.TokensRecuperacion
-            .Where(t => t.UsuarioId == usuario.Id && !t.Usado)
-            .ToListAsync();
+        List<TokenRecuperacion> anteriores = await _db.TokensRecuperacion.Where(t => t.UsuarioId == usuario.Id && !t.Usado).ToListAsync();
         foreach (TokenRecuperacion anterior in anteriores)
         {
             anterior.Usado = true;
@@ -68,9 +66,7 @@ public class ServicioContrasena
         if (!Validaciones.ClaveValida(claveNueva))
             return Resultado.Error("La contraseña debe tener al menos 8 caracteres, con letras y números.");
 
-        TokenRecuperacion? t = await _db.TokensRecuperacion
-            .Include(x => x.Usuario)
-            .FirstOrDefaultAsync(x => x.Codigo == codigo);
+        TokenRecuperacion? t = await _db.TokensRecuperacion.Include(x => x.Usuario).FirstOrDefaultAsync(x => x.Codigo == codigo);
 
         // Un solo mensaje para todos los fallos: no existe, ya usado o vencido.
         if (t == null || t.Usuario == null || t.Usado || t.FechaVencimiento < DateTime.UtcNow)

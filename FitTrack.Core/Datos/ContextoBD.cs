@@ -6,9 +6,7 @@ namespace FitTrack.Core.Datos;
 
 public class ContextoBD : DbContext
 {
-    public ContextoBD(DbContextOptions<ContextoBD> options) : base(options)
-    {
-    }
+    public ContextoBD(DbContextOptions<ContextoBD> options) : base(options){}
 
     public DbSet<CorreoEnCola> CorreosEnCola => Set<CorreoEnCola>();
     public DbSet<Usuario> Usuarios => Set<Usuario>();
