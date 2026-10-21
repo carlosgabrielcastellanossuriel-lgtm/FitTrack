@@ -242,12 +242,39 @@ Detalle completo en [`Documents/maquina-de-estados.md`](Documents/maquina-de-est
 | Control de acceso (registro, activación, login, sesiones, roles) | Implementado |
 | Recuperación y cambio de contraseña | Implementado |
 | Administración de usuarios | Implementado |
+| Gestión de permisos | Implementado |
 | Cola y envío de correos | Implementado |
 | Perfil y cálculo de metas | Implementado |
 | ResumenDiario y máquina de estados | Entidad y reglas implementadas |
 | Catálogo de alimentos (`Alimento`) | Pendiente |
 | Registro de comidas (`RegistroComida`) | Pendiente |
 | Notificaciones de alerta, dashboard e historial | Pendiente |
+
+## Gestión de permisos
+
+| RF | Petición (método, ruta, cuerpo, quién) | Resultado esperado |
+|---|---|---|
+| RF-GP-01 | `POST /api/permisos`<br>Cuerpo: `{ "permiso": "ExportarDatos" }`<br>Quién: cualquier usuario con sesión válida | `200 OK` `{ "mensaje": "Solicitud de permiso creada." }` o `400 BadRequest` si el permiso no es válido. |
+| RF-GP-02 | `GET /api/permisos/pendientes`<br>Sin cuerpo<br>Quién: solo Administrador | `200 OK` con lista de `{ id, solicitanteId, permiso, estado, fechaCreacion }`. |
+| RF-GP-03 | `POST /api/permisos/{id}/aprobar`<br>Sin cuerpo<br>Quién: solo Administrador | `200 OK` `{ "mensaje": "Permiso aprobado y aplicado." }`. Guarda `ResueltoPorId`, `FechaResolucion` y crea `PermisoUsuario`. |
+| RF-GP-04 | `POST /api/permisos/{id}/rechazar`<br>Cuerpo: `{ "motivo": "..." }`<br>Quién: solo Administrador | `200 OK` `{ "mensaje": "Solicitud rechazada." }`. Guarda `ResueltoPorId`, `FechaResolucion` y `MotivoRechazo`. |
+| RF-GP-05 | Dentro de `POST /api/permisos/{id}/aprobar`<br>Quién: solo Administrador | Se agrega un `PermisoUsuario` si el solicitante no lo tiene ya, y la solicitud pasa a `Aplicada`. |
+| RF-GP-06 | `POST /api/permisos/{id}/aprobar` sobre una solicitud no pendiente<br>Quién: solo Administrador | `400 BadRequest` y no se guarda nada. |
+| RF-GP-07 | `POST /api/permisos/{id}/aprobar` siendo el propio solicitante<br>Quién: solo Administrador | `400 BadRequest` "No puedes resolver tu propia solicitud." |
+
+### Comprobar persistencia al reiniciar (RD-09)
+
+1. Como administrador, crea una solicitud con `POST /api/permisos` (queda en estado `Pendiente`).
+2. Reinicia la API (`dotnet run --project FitTrack.Api`).
+3. Vuelve a consultar `GET /api/permisos/pendientes`: la solicitud creada sigue apareciendo, porque se guardó en la base de datos.
+
+## Pruebas
+
+Ejecuta las pruebas unitarias con:
+
+```bash
+dotnet test FitTrack.Tests
+```
 
 ## Contribuir
 
