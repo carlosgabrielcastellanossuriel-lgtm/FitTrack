@@ -1,4 +1,5 @@
 ﻿using FitTrack.Core.Correos;
+using FitTrack.Core.Permisos;
 using FitTrack.Core.Usuarios;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +15,9 @@ public class ContextoBD : DbContext
     public DbSet<Sesion> Sesiones => Set<Sesion>();
 
     public DbSet<TokenRecuperacion> TokensRecuperacion => Set<TokenRecuperacion>();
+
+    public DbSet<SolicitudPermiso> SolicitudesPermiso => Set<SolicitudPermiso>();
+    public DbSet<PermisoUsuario> PermisosUsuario => Set<PermisoUsuario>();
 
     // Entidades de otros proyectos (como Negocio) que Core no puede ver directamente.
     // La Api las agrega al arrancar y aquí se registran como tablas.
@@ -46,6 +50,12 @@ public class ContextoBD : DbContext
         {
             e.Property(t => t.Codigo).HasMaxLength(100);
             e.HasIndex(t => t.Codigo).IsUnique();
+        });
+
+        modelBuilder.Entity<PermisoUsuario>(e =>
+        {
+            // Índice único: un usuario no puede tener el mismo permiso dos veces.
+            e.HasIndex(p => new { p.UsuarioId, p.Permiso }).IsUnique();
         });
 
         foreach (Type tipo in EntidadesNegocio)

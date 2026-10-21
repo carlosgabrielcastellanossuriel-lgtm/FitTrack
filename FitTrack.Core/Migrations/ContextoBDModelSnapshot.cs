@@ -58,6 +58,64 @@ namespace FitTrack.Core.Migrations
                     b.ToTable("CorreosEnCola");
                 });
 
+            modelBuilder.Entity("FitTrack.Core.Permisos.PermisoUsuario", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Permiso")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId", "Permiso")
+                        .IsUnique();
+
+                    b.ToTable("PermisosUsuario");
+                });
+
+            modelBuilder.Entity("FitTrack.Core.Permisos.SolicitudPermiso", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Estado")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("FechaResolucion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MotivoRechazo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Permiso")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ResueltoPorId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SolicitanteId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SolicitanteId");
+
+                    b.ToTable("SolicitudesPermiso");
+                });
+
             modelBuilder.Entity("FitTrack.Core.Usuarios.Sesion", b =>
                 {
                     b.Property<int>("Id")
@@ -277,6 +335,28 @@ namespace FitTrack.Core.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("ResumenDiario");
+                });
+
+            modelBuilder.Entity("FitTrack.Core.Permisos.PermisoUsuario", b =>
+                {
+                    b.HasOne("FitTrack.Core.Usuarios.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("FitTrack.Core.Permisos.SolicitudPermiso", b =>
+                {
+                    b.HasOne("FitTrack.Core.Usuarios.Usuario", "Solicitante")
+                        .WithMany()
+                        .HasForeignKey("SolicitanteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Solicitante");
                 });
 
             modelBuilder.Entity("FitTrack.Core.Usuarios.Sesion", b =>
