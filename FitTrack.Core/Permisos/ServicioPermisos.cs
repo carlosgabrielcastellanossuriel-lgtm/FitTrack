@@ -63,8 +63,9 @@ public class ServicioPermisos
             return Resultado.Error("No puedes resolver tu propia solicitud.");
 
         // Solo se permite la transición Pendiente -> Aprobada.
-        if (!solicitud.CambiarEstado(EstadoSolicitud.Aprobada))
+        if (solicitud.Estado == EstadoSolicitud.Rechazada)
             return Resultado.Error("No se puede aprobar la solicitud en su estado actual.");
+        solicitud.Estado = EstadoSolicitud.Aprobada;
 
         solicitud.ResueltoPorId = admin.Id;
         solicitud.FechaResolucion = DateTime.UtcNow;
