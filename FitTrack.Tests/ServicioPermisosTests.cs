@@ -1,3 +1,4 @@
+using System.Linq;
 using FitTrack.Core.Datos;
 using FitTrack.Core.Permisos;
 using FitTrack.Core.Usuarios;
@@ -88,9 +89,12 @@ public class ServicioPermisosTests
         Assert.Equal(EstadoSolicitud.Rechazada, guardada!.Estado);
     }
 
-    // RF_GP_04: rechazar sin motivo no se completa y sigue siendo Pendiente.
-    [Fact]
-    public async Task RF_GP_04_Rechazar_SinMotivo_NoSeCompletaYSigueSiendoPendiente()
+    // RF_GP_04: rechazar sin motivo (null, vacío o solo espacios) no se completa y sigue siendo Pendiente.
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task RF_GP_04_Rechazar_SinMotivo_NoSeCompletaYSigueSiendoPendiente(string? motivo)
     {
         // Preparar
         using var db = CrearContexto();
@@ -101,12 +105,36 @@ public class ServicioPermisosTests
         var solicitud = CrearSolicitud(db, solicitante.Id, EstadoSolicitud.Pendiente);
 
         // Actuar
-        var resultado = await servicio.RechazarAsync(solicitud.Id, admin, "");
+        var resultado = await servicio.RechazarAsync(solicitud.Id, admin, motivo!);
 
         // Verificar
         Assert.False(resultado.Exito);
         var guardada = await db.SolicitudesPermiso.FindAsync(solicitud.Id);
         Assert.Equal(EstadoSolicitud.Pendiente, guardada!.Estado);
+    }
+
+    // RF_GP_04: rechazar con motivo deja Rechazada, guarda el motivo y registra quién lo resolvió.
+    [Fact]
+    public async Task RF_GP_04_Rechazar_ConMotivo_QuedaRechazadaConMotivoYResueltoPor()
+    {
+        // Preparar
+        using var db = CrearContexto();
+        var servicio = new ServicioPermisos(db);
+
+        var admin = CrearUsuario(db, 1, Rol.Administrador);
+        var solicitante = CrearUsuario(db, 2, Rol.Estandar);
+        var solicitud = CrearSolicitud(db, solicitante.Id, EstadoSolicitud.Pendiente);
+        string motivo = "No cumple los requisitos";
+
+        // Actuar
+        var resultado = await servicio.RechazarAsync(solicitud.Id, admin, motivo);
+
+        // Verificar
+        Assert.True(resultado.Exito);
+        var guardada = await db.SolicitudesPermiso.FindAsync(solicitud.Id);
+        Assert.Equal(EstadoSolicitud.Rechazada, guardada!.Estado);
+        Assert.Equal(motivo, guardada.MotivoRechazo);
+        Assert.Equal(admin.Id, guardada.ResueltoPorId);
     }
 
     // RF_GP_01: CrearAsync deja una solicitud en estado Pendiente.
@@ -177,5 +205,98 @@ public class ServicioPermisosTests
         Assert.Contains(lista, s => s.Id == pendienteB.Id);
         Assert.DoesNotContain(lista, s => s.Id == aprobada.Id);
         Assert.DoesNotContain(lista, s => s.Id == rechazada.Id);
+    }
+
+    // RF_GP_06: aprobar dos veces la misma solicitud; la segunda falla y el estado sigue Aplicada.
+    [Fact]
+    public async Task RF_GP_06_Aprobar_DosVecesLaMisma_LaSegundaFallaYSigueAplicada()
+    {
+        // Preparar
+        using var db = CrearContexto();
+        var servicio = new ServicioPermisos(db);
+
+        var admin = CrearUsuario(db, 1, Rol.Administrador);
+        var solicitante = CrearUsuario(db, 2, Rol.Estandar);
+        var solicitud = CrearSolicitud(db, solicitante.Id, EstadoSolicitud.Pendiente);
+
+        // Actuar - primera aprobación (Pendiente -> Aprobada -> Aplicada dentro del servicio)
+        var primera = await servicio.AprobarAsync(solicitud.Id, admin);
+        // Actuar - segunda aprobación sobre la misma solicitud (ya Aplicada)
+        var segunda = await servicio.AprobarAsync(solicitud.Id, admin);
+
+        // Verificar
+        Assert.True(primera.Exito);
+        Assert.False(segunda.Exito);
+        var guardada = await db.SolicitudesPermiso.FindAsync(solicitud.Id);
+        Assert.Equal(EstadoSolicitud.Aplicada, guardada!.Estado);
+    }
+
+    // RF_GP_06: CambiarEstado(Aplicada) estando Rechazada devuelve false y el estado sigue Rechazada.
+    [Fact]
+    public async Task RF_GP_06_CambiarEstado_AplicadaDesdeRechazada_DevuelveFalseYSigueRechazada()
+    {
+        // Preparar
+        using var db = CrearContexto();
+        var servicio = new ServicioPermisos(db);
+
+        var solicitante = CrearUsuario(db, 1, Rol.Estandar);
+        var solicitud = CrearSolicitud(db, solicitante.Id, EstadoSolicitud.Rechazada);
+
+        // Actuar
+        bool resultado = solicitud.CambiarEstado(EstadoSolicitud.Aplicada);
+
+        // Verificar
+        Assert.False(resultado);
+        var guardada = await db.SolicitudesPermiso.FindAsync(solicitud.Id);
+        Assert.Equal(EstadoSolicitud.Rechazada, guardada!.Estado);
+    }
+
+    // RF_GP_06: CambiarEstado(Pendiente) estando Aprobada devuelve false y el estado sigue Aprobada.
+    [Fact]
+    public async Task RF_GP_06_CambiarEstado_PendienteDesdeAprobada_DevuelveFalseYSigueAprobada()
+    {
+        // Preparar
+        using var db = CrearContexto();
+        var servicio = new ServicioPermisos(db);
+
+        var solicitante = CrearUsuario(db, 1, Rol.Estandar);
+        var solicitud = CrearSolicitud(db, solicitante.Id, EstadoSolicitud.Aprobada);
+
+        // Actuar
+        bool resultado = solicitud.CambiarEstado(EstadoSolicitud.Pendiente);
+
+        // Verificar
+        Assert.False(resultado);
+        var guardada = await db.SolicitudesPermiso.FindAsync(solicitud.Id);
+        Assert.Equal(EstadoSolicitud.Aprobada, guardada!.Estado);
+    }
+
+    // RF_GP_06: TransicionesSolicitud.EsPermitida solo es true para
+    // Pendiente->Aprobada, Pendiente->Rechazada y Aprobada->Aplicada.
+    [Fact]
+    public void RF_GP_06_TransicionesSolicitud_SoloLasPermitidasSonVerdaderas()
+    {
+        // Todos los estados definidos en el enum.
+        var estados = Enum.GetValues<EstadoSolicitud>();
+
+        // Pares que DEBEN ser permitidos según el negocio.
+        var permitidas = new (EstadoSolicitud Desde, EstadoSolicitud Hacia)[]
+        {
+            (EstadoSolicitud.Pendiente, EstadoSolicitud.Aprobada),
+            (EstadoSolicitud.Pendiente, EstadoSolicitud.Rechazada),
+            (EstadoSolicitud.Aprobada, EstadoSolicitud.Aplicada),
+        };
+
+        // Actuar / Verificar: recorre todos los pares (desde, hacia).
+        foreach (var desde in estados)
+        {
+            foreach (var hacia in estados)
+            {
+                bool real = TransicionesSolicitud.EsPermitida(desde, hacia);
+                bool esperado = permitidas.Any(p => p.Desde == desde && p.Hacia == hacia);
+                Assert.True(esperado == real,
+                    $"Transición {desde} -> {hacia}: esperado {esperado}, real {real}");
+            }
+        }
     }
 }
