@@ -89,6 +89,48 @@ public class ServicioPermisosTests
         Assert.Equal(EstadoSolicitud.Rechazada, guardada!.Estado);
     }
 
+    // RF_GP_07: un Administrador que intenta aprobar una solicitud creada por él mismo falla y el estado sigue Pendiente.
+    [Fact]
+    public async Task RF_GP_07_Administrador_Aprobar_SuPropiaSolicitud_FallaYSiguePendiente()
+    {
+        // Preparar
+        using var db = CrearContexto();
+        var servicio = new ServicioPermisos(db);
+
+        var admin = CrearUsuario(db, 1, Rol.Administrador);
+        // El admin es también el solicitante de la solicitud.
+        var solicitud = CrearSolicitud(db, admin.Id, EstadoSolicitud.Pendiente);
+
+        // Actuar
+        var resultado = await servicio.AprobarAsync(solicitud.Id, admin);
+
+        // Verificar
+        Assert.False(resultado.Exito);
+        var guardada = await db.SolicitudesPermiso.FindAsync(solicitud.Id);
+        Assert.Equal(EstadoSolicitud.Pendiente, guardada!.Estado);
+    }
+
+    // RF_GP_07: un Administrador que intenta rechazar una solicitud creada por él mismo falla y el estado sigue Pendiente.
+    [Fact]
+    public async Task RF_GP_07_Administrador_Rechazar_SuPropiaSolicitud_FallaYSiguePendiente()
+    {
+        // Preparar
+        using var db = CrearContexto();
+        var servicio = new ServicioPermisos(db);
+
+        var admin = CrearUsuario(db, 1, Rol.Administrador);
+        // El admin es también el solicitante de la solicitud.
+        var solicitud = CrearSolicitud(db, admin.Id, EstadoSolicitud.Pendiente);
+
+        // Actuar
+        var resultado = await servicio.RechazarAsync(solicitud.Id, admin, "Motivo de prueba");
+
+        // Verificar
+        Assert.False(resultado.Exito);
+        var guardada = await db.SolicitudesPermiso.FindAsync(solicitud.Id);
+        Assert.Equal(EstadoSolicitud.Pendiente, guardada!.Estado);
+    }
+
     // RF_GP_04: rechazar sin motivo (null, vacío o solo espacios) no se completa y sigue siendo Pendiente.
     [Theory]
     [InlineData(null)]
