@@ -255,7 +255,7 @@ Detalle completo en [`Documents/maquina-de-estados.md`](Documents/maquina-de-est
 | RF | Petición (método, ruta, cuerpo, quién) | Resultado esperado |
 |---|---|---|
 | RF-GP-01 | `POST /api/permisos`<br>Cuerpo: `{ "permiso": "ExportarDatos" }`<br>Quién: cualquier usuario con sesión válida | `200 OK` `{ "mensaje": "Solicitud de permiso creada." }` o `400 BadRequest` si el permiso no es válido. |
-| RF-GP-02 | `GET /api/permisos/pendientes`<br>Sin cuerpo<br>Quién: solo Administrador | `200 OK` con lista de `{ id, solicitanteId, permiso, estado, fechaCreacion }`. |
+| RF-GP-02 | `GET /api/permisos/pendientes`<br>Sin cuerpo<br>Administrador ve todas las pendientes; un Estándar solo las suyas | `200 OK` con lista de `{ id, solicitanteId, permiso, estado, fechaCreacion }`. |
 | RF-GP-03 | `POST /api/permisos/{id}/aprobar`<br>Sin cuerpo<br>Quién: solo Administrador | `200 OK` `{ "mensaje": "Permiso aprobado y aplicado." }`. Guarda `ResueltoPorId`, `FechaResolucion` y crea `PermisoUsuario`. |
 | RF-GP-04 | `POST /api/permisos/{id}/rechazar`<br>Cuerpo: `{ "motivo": "..." }`<br>Quién: solo Administrador | `200 OK` `{ "mensaje": "Solicitud rechazada." }`. Guarda `ResueltoPorId`, `FechaResolucion` y `MotivoRechazo`. |
 | RF-GP-05 | Dentro de `POST /api/permisos/{id}/aprobar`<br>Quién: solo Administrador | Se agrega un `PermisoUsuario` si el solicitante no lo tiene ya, y la solicitud pasa a `Aplicada`. |
@@ -275,6 +275,17 @@ Ejecuta las pruebas unitarias con:
 ```bash
 dotnet test FitTrack.Tests
 ```
+
+No necesita base de datos ni la API levantada: son pruebas unitarias sobre `FitTrack.Core` y `FitTrack.Negocio`.
+
+## Defectos
+
+1. `RF_GP_06_Aprobar_DosVecesLaMisma_LaSegundaFallaYSigueAplicada` — comprueba que `AprobarAsync` no salta `CambiarEstado`, valida solo `Rechazada` ni asigna `Estado = Aprobada` directamente.
+2. `RF_GP_06_CambiarEstado_AplicadaDesdeRechazada_DevuelveFalseYSigueRechazada`, `RF_GP_06_TransicionesSolicitud_SoloLasPermitidasSonVerdaderas` — comprueban que `TransicionesSolicitud` no permite ir de `Rechazada` a `Aplicada`.
+3. `RF_GP_07_Administrador_Rechazar_SuPropiaSolicitud_FallaYSiguePendiente`, `RF_GP_07_Administrador_Aprobar_SuPropiaSolicitud_FallaYSiguePendiente` — comprueban que `ServicioPermisos` conserva las verificaciones de "solicitud propia" en `AprobarAsync` y `RechazarAsync`.
+4. `RF_GP_02_Estandar_VeSoloSusPropiaSolicitudes` — comprueba que `ListarPendientesAsync` filtra por `SolicitanteId == consultante.Id` (no `!=`).
+5. `RF_GP_06_CambiarEstado_PendienteDesdeAprobada_DevuelveFalseYSigueAprobada`, `RF_GP_06_TransicionesSolicitud_SoloLasPermitidasSonVerdaderas` — comprueban que `TransicionesSolicitud` no permite ir de `Aprobada` a `Pendiente`.
+6. `RF_GP_04_Rechazar_ConMotivo_QuedaRechazadaConMotivoYResueltoPor` — comprueba que `RechazarAsync` asigna `solicitud.MotivoRechazo = motivo;`.
 
 ## Contribuir
 
