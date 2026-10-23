@@ -35,12 +35,18 @@ public class ServicioPermisos
     }
 
     // ---------- LISTAR PENDIENTES (RF-GP-02) ----------
-    public async Task<List<SolicitudPermiso>> ListarPendientesAsync()
+    public async Task<List<SolicitudPermiso>> ListarPendientesAsync(Usuario consultante)
     {
         // AsNoTracking: solo se lee, EF no necesita vigilar estos objetos.
-        return await _db.SolicitudesPermiso
+        IQueryable<SolicitudPermiso> consulta = _db.SolicitudesPermiso
             .AsNoTracking()
-            .Where(s => s.Estado == EstadoSolicitud.Pendiente)
+            .Where(s => s.Estado == EstadoSolicitud.Pendiente);
+
+        // Los no administradores solo ven sus propias solicitudes.
+        if (consultante.Rol != Rol.Administrador)
+            consulta = consulta.Where(s => s.SolicitanteId == consultante.Id);
+
+        return await consulta
             .OrderBy(s => s.FechaCreacion)
             .ToListAsync();
     }

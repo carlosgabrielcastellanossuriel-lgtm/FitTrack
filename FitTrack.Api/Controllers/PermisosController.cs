@@ -33,12 +33,11 @@ public class PermisosController : ControllerBase
         return r.Exito ? Ok(new { mensaje = r.Mensaje }) : BadRequest(new { mensaje = r.Mensaje });
     }
 
-    // GET /api/permisos/pendientes   solo Administrador   (RF-GP-02)
+    // GET /api/permisos/pendientes   (RF-GP-02)
     [HttpGet("pendientes")]
-    [RequiereRol(Rol.Administrador)]
     public async Task<IActionResult> Pendientes()
     {
-        List<SolicitudPermiso> solicitudes = await _permisos.ListarPendientesAsync();
+        List<SolicitudPermiso> solicitudes = await _permisos.ListarPendientesAsync(UsuarioActual);
 
         var lista = solicitudes.Select(s => new
         {
