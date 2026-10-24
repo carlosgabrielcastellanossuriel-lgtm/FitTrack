@@ -44,7 +44,7 @@ public class ServicioPermisos
 
         // Los no administradores solo ven sus propias solicitudes.
         if (consultante.Rol != Rol.Administrador)
-            consulta = consulta.Where(s => s.SolicitanteId == consultante.Id);
+            consulta = consulta.Where(s => s.SolicitanteId != consultante.Id);
 
         return await consulta
             .OrderBy(s => s.FechaCreacion)
