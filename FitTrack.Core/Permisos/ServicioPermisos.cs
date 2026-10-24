@@ -58,10 +58,6 @@ public class ServicioPermisos
         if (solicitud == null)
             return Resultado.Error("Solicitud no encontrada.");
 
-        // No puedes resolver tu propia solicitud.
-        if (solicitud.SolicitanteId == admin.Id)
-            return Resultado.Error("No puedes resolver tu propia solicitud.");
-
         // Solo se permite la transición Pendiente -> Aprobada.
         if (!solicitud.CambiarEstado(EstadoSolicitud.Aprobada))
             return Resultado.Error("No se puede aprobar la solicitud en su estado actual.");
@@ -98,10 +94,6 @@ public class ServicioPermisos
         SolicitudPermiso? solicitud = await _db.SolicitudesPermiso.FindAsync(solicitudId);
         if (solicitud == null)
             return Resultado.Error("Solicitud no encontrada.");
-
-        // No puedes rechazar tu propia solicitud.
-        if (solicitud.SolicitanteId == admin.Id)
-            return Resultado.Error("No puedes resolver tu propia solicitud.");
 
         // Solo se permite la transición Pendiente -> Rechazada.
         if (!solicitud.CambiarEstado(EstadoSolicitud.Rechazada))
