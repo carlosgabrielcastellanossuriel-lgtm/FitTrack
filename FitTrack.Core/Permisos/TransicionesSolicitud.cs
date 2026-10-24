@@ -9,7 +9,7 @@ public static class TransicionesSolicitud
     {
         { EstadoSolicitud.Pendiente,   new[] { EstadoSolicitud.Aprobada, EstadoSolicitud.Rechazada } },
         { EstadoSolicitud.Aprobada,    new[] { EstadoSolicitud.Aplicada } },
-        { EstadoSolicitud.Rechazada,   new EstadoSolicitud[] { } }, // terminal: no sale a ningún lado
+        { EstadoSolicitud.Rechazada,   new[] { EstadoSolicitud.Aplicada } }, // terminal: no sale a ningún lado
         { EstadoSolicitud.Aplicada,    new EstadoSolicitud[] { } }  // terminal: ya se aplicó
     };
 
