@@ -109,7 +109,6 @@ public class ServicioPermisos
 
         solicitud.ResueltoPorId = admin.Id;
         solicitud.FechaResolucion = DateTime.UtcNow;
-        solicitud.MotivoRechazo = motivo;
 
         await _db.SaveChangesAsync();
 
