@@ -1,11 +1,39 @@
+using System.Runtime.CompilerServices;
+using FitTrack.Core.Datos;
+using FitTrack.Core.Permisos;
+using FitTrack.Core.Usuarios;
 using FitTrack.Negocio.Perfiles;
 using FitTrack.Negocio.Resumenes;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace FitTrack.Tests;
 
 public class ResumenDiarioTests
 {
+    // Registra ResumenDiario como tabla del contexto antes de que corran las pruebas.
+    [ModuleInitializer]
+    public static void RegistrarEntidadesNegocio() { ContextoBD.EntidadesNegocio.Add(typeof(ResumenDiario)); }
+
+    // Crea un ContextoBD con base de datos en memoria y un nombre único por llamada.
+    // Así cada prueba es independiente y no comparten datos.
+    private static ContextoBD CrearContexto()
+    {
+        var options = new DbContextOptionsBuilder<ContextoBD>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        return new ContextoBD(options);
+    }
+
+    // Crea, guarda y devuelve un Usuario con el id y rol indicados.
+    private static Usuario CrearUsuario(ContextoBD db, int id, Rol rol)
+    {
+        var usuario = new Usuario { Id = id, Correo = $"usuario{id}@test.com", Rol = rol };
+        db.Usuarios.Add(usuario);
+        db.SaveChanges();
+        return usuario;
+    }
+
     [Fact]
     public void Transicion_EnProgreso_A_DentroDeMeta_SePermite()
     {
@@ -168,5 +196,48 @@ public class ResumenDiarioTests
         // Verificar
         Assert.True(registrada);
         Assert.Equal(EstadoResumen.DentroDeMeta, resumen.EstadoActual);
+    }
+
+    [Fact]
+    public async Task Historial_SinPermisoAprobado_SeRechaza()
+    {
+        // Preparar
+        ContextoBD db = CrearContexto();
+        Usuario admin = CrearUsuario(db, 1, Rol.Administrador);
+        Usuario estandar = CrearUsuario(db, 2, Rol.Estandar);
+
+        ServicioPermisos permisos = new ServicioPermisos(db);
+        await permisos.CrearAsync(estandar, Permiso.VerEstadisticas);   // queda pendiente, sin aprobar
+
+        ServicioResumen resumen = new ServicioResumen(db, permisos);
+
+        // Actuar
+        List<ResumenDiario>? historial = await resumen.HistorialAsync(estandar);
+
+        // Verificar
+        Assert.Null(historial);
+    }
+
+    [Fact]
+    public async Task Historial_ConPermisoAprobadoPorAdmin_SePermite()
+    {
+        // Preparar
+        ContextoBD db = CrearContexto();
+        Usuario admin = CrearUsuario(db, 1, Rol.Administrador);
+        Usuario estandar = CrearUsuario(db, 2, Rol.Estandar);
+
+        ServicioPermisos permisos = new ServicioPermisos(db);
+        await permisos.CrearAsync(estandar, Permiso.VerEstadisticas);
+
+        int idSolicitud = db.SolicitudesPermiso.First().Id;
+        await permisos.AprobarAsync(idSolicitud, admin);
+
+        ServicioResumen resumen = new ServicioResumen(db, permisos);
+
+        // Actuar
+        List<ResumenDiario>? historial = await resumen.HistorialAsync(estandar);
+
+        // Verificar
+        Assert.NotNull(historial);
     }
 }
