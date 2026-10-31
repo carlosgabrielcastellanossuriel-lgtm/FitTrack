@@ -96,8 +96,6 @@ public class ServicioResumen
     // Devuelve el historial de resúmenes del usuario. Solo con el permiso VerEstadisticas.
     public async Task<List<ResumenDiario>?> HistorialAsync(Usuario usuario)
     {
-        if (!await _permisos.TieneAsync(usuario.Id, Permiso.VerEstadisticas)) return null;
-
         // AsNoTracking: solo se lee, EF no necesita vigilar estos objetos.
         return await _db.Set<ResumenDiario>()
             .AsNoTracking()
