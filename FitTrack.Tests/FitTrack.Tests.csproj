@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FitTrack.Core\FitTrack.Core.csproj" />
+    <ProjectReference Include="..\FitTrack.Negocio\FitTrack.Negocio.csproj" />
   </ItemGroup>
 
 </Project>

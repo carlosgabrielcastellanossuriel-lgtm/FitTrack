@@ -50,9 +50,9 @@ Cada día, un usuario tiene un `ResumenDiario` que acumula lo consumido y tiene 
 
 | DentroDeMeta | Excedido | Sistema | Un nuevo registro hace que algún total supere su meta. |
 
-| DentroDeMeta | Cerrado | Sistema | Termina el día. |
+| DentroDeMeta | Cerrado | Usuario | El usuario cierra el día (POST /api/resumen/cerrar). |
 
-| Excedido | Cerrado | Sistema | Termina el día. |
+| Excedido | Cerrado | Usuario | El usuario cierra el día (POST /api/resumen/cerrar). |
 
 
 
