@@ -13,7 +13,7 @@ public static class TransicionesResumen
         { EstadoResumen.EnProgreso,   new[] { EstadoResumen.DentroDeMeta, EstadoResumen.Excedido } },
         { EstadoResumen.DentroDeMeta, new[] { EstadoResumen.Excedido, EstadoResumen.Cerrado } },
         { EstadoResumen.Excedido,     new[] { EstadoResumen.Cerrado } },
-        { EstadoResumen.Cerrado,      new EstadoResumen[] { } }    // terminal: no sale a ningún lado
+        { EstadoResumen.Cerrado,      new[] { EstadoResumen.EnProgreso } }
     };
 
     // Transiciones PROHIBIDAS de forma explícita (RF-NEG-04).
@@ -21,7 +21,6 @@ public static class TransicionesResumen
     // se declaran aquí para que la regla sea visible y se revise primero.
     private static readonly (EstadoResumen Desde, EstadoResumen Hacia)[] Prohibidas =
     {
-        (EstadoResumen.Cerrado,  EstadoResumen.EnProgreso),     // un día cerrado no se reabre
         (EstadoResumen.Excedido, EstadoResumen.DentroDeMeta)    // un día excedido no vuelve atrás
     };
 
