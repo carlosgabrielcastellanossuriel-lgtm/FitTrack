@@ -13,7 +13,7 @@ public static class TransicionesResumen
         { EstadoResumen.EnProgreso,   new[] { EstadoResumen.DentroDeMeta, EstadoResumen.Excedido } },
         { EstadoResumen.DentroDeMeta, new[] { EstadoResumen.Excedido, EstadoResumen.Cerrado } },
         { EstadoResumen.Excedido,     new[] { EstadoResumen.Cerrado } },
-        { EstadoResumen.Cerrado,      new EstadoResumen[] { } }    // terminal: no sale a ningún lado
+        { EstadoResumen.Cerrado,      new[] { EstadoResumen.DentroDeMeta } }    // terminal: no sale a ningún lado
     };
 
     // Transiciones PROHIBIDAS de forma explícita (RF-NEG-04).
