@@ -17,7 +17,7 @@ namespace FitTrack.Core.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -250,6 +250,35 @@ namespace FitTrack.Core.Migrations
                         .IsUnique();
 
                     b.ToTable("Usuarios");
+                });
+
+            modelBuilder.Entity("FitTrack.Negocio.Alimentos.Alimento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("CaloriasPor100g")
+                        .HasColumnType("float");
+
+                    b.Property<double>("CarbohidratosPor100g")
+                        .HasColumnType("float");
+
+                    b.Property<double>("GrasasPor100g")
+                        .HasColumnType("float");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double>("ProteinaPor100g")
+                        .HasColumnType("float");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Alimento");
                 });
 
             modelBuilder.Entity("FitTrack.Negocio.Perfiles.PerfilUsuario", b =>

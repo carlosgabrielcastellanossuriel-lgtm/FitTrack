@@ -1,4 +1,5 @@
 ﻿using FitTrack.Core.Usuarios;
+using FitTrack.Negocio.Perfiles;
 
 namespace FitTrack.Negocio.Resumenes;
 
@@ -27,6 +28,34 @@ public class ResumenDiario
             return false;
 
         EstadoActual = nuevo;
+        return true;
+    }
+
+    // Registra una comida: suma sus valores y recalcula el estado del día.
+    // Devuelve false (sin cambiar nada) si el día ya está cerrado.
+    public bool RegistrarComida(double calorias, double proteinas, double carbohidratos, double grasas, PerfilUsuario perfil)
+    {
+        // 1. Un día cerrado no acepta más comidas.
+        if (TransicionesResumen.EsTerminal(EstadoActual))
+            return false;
+
+        // 2. Se suman los valores de la comida a los acumulados del día.
+        CaloriasAcumuladas += calorias;
+        ProteinasAcumuladas += proteinas;
+        CarbohidratosAcumulados += carbohidratos;
+        GrasasAcumuladas += grasas;
+
+        // 3. ¿Algún acumulado supera su meta del perfil?
+        bool excede = CaloriasAcumuladas > perfil.CaloriasMeta || ProteinasAcumuladas > perfil.ProteinaMeta || CarbohidratosAcumulados > perfil.CarbohidratosMeta || GrasasAcumuladas > perfil.GrasasMeta;
+
+        // 4. Estado que corresponde según el resultado anterior.
+        EstadoResumen nuevo = excede ? EstadoResumen.Excedido : EstadoResumen.DentroDeMeta;
+
+        // 5. Solo se cambia si es distinto (CambiarEstado valida la transición).
+        if (nuevo != EstadoActual)
+            CambiarEstado(nuevo);
+
+        // 6. La comida quedó registrada.
         return true;
     }
 }

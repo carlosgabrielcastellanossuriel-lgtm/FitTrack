@@ -2,6 +2,7 @@ using FitTrack.Core.Correos;
 using FitTrack.Core.Datos;
 using FitTrack.Core.Permisos;
 using FitTrack.Core.Usuarios;
+using FitTrack.Negocio.Alimentos;
 using FitTrack.Negocio.Perfiles;
 using FitTrack.Negocio.Resumenes;
 using Microsoft.EntityFrameworkCore;
@@ -23,7 +24,10 @@ builder.Services.AddScoped<ServicioContrasena>();
 builder.Services.AddScoped<ServicioAdministracion>();
 builder.Services.AddScoped<ServicioPermisos>();
 ContextoBD.EntidadesNegocio.Add(typeof(PerfilUsuario));// Le dice a EF que PerfilUsuario (del proyecto Negocio) tambi�n es una tabla.
+ContextoBD.EntidadesNegocio.Add(typeof(Alimento));// Le dice a EF que Alimento (del proyecto Negocio) también es una tabla.
 builder.Services.AddScoped<ServicioPerfil>();
+builder.Services.AddScoped<ServicioAlimento>();
+builder.Services.AddScoped<ServicioResumen>();
 
 builder.Services.AddControllers();
 

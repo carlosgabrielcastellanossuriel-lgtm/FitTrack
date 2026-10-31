@@ -235,6 +235,18 @@ Cada día, el usuario tiene un `ResumenDiario` con estos estados: `EnProgreso` (
 
 Detalle completo en [`Documents/maquina-de-estados.md`](Documents/maquina-de-estados.md).
 
+## Funcionalidades del negocio
+
+Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el cuerpo de la petición y las respuestas son JSON.
+
+| Funcionalidad | Ruta | Quién | Cómo provocarla |
+|---|---|---|---|
+| Perfil | `PUT /api/perfil` | Cualquier usuario con sesión | Cuerpo: `{ "edad": 25, "peso": 165, "altura": 70, "sexo": "Masculino", "nivelActividad": "Moderado", "objetivo": "Deficit" }` → `200 OK` con el perfil y las metas calculadas. `400 BadRequest` si algún dato está fuera de rango. |
+| Crear alimento | `POST /api/alimentos` | Solo Administrador (`403` para un Estándar) | Cuerpo: `{ "nombre": "Pollo", "caloriasPor100g": 165, "proteinaPor100g": 31, "carbohidratosPor100g": 0, "grasasPor100g": 3.6 }` → `200 OK` `{ "mensaje": "Alimento guardado." }`. `400 BadRequest` si el nombre está vacío o algún valor es negativo. |
+| Registrar comida | `POST /api/resumen/comida` | Cualquier usuario con sesión y perfil creado | Cuerpo: `{ "alimentoId": 1, "gramos": 150 }` → `200 OK` `{ "mensaje": "Comida registrada. Estado del día: DentroDeMeta." }`. `400 BadRequest` con "Primero crea tu perfil." si no hay perfil, "Alimento no encontrado." si el id no existe o "El día está cerrado." si ya se cerró. |
+| Cerrar día | `POST /api/resumen/cerrar` | Cualquier usuario con sesión | Sin cuerpo → `200 OK` `{ "mensaje": "Día cerrado." }`. `400 BadRequest` con "Hoy no has registrado comidas." si no hay resumen de hoy o "El día no se puede cerrar en su estado actual." si ya está cerrado. |
+| Historial | `GET /api/resumen/historial` | Usuarios con el permiso `VerEstadisticas` | Sin cuerpo → `200 OK` con la lista de `{ fecha, calorias, proteinas, carbohidratos, grasas, estado }`. Sin el permiso: `403 Forbidden` `{ "mensaje": "No tienes permiso." }`. |
+
 ## Estado del proyecto
 
 | Módulo | Estado |
@@ -245,10 +257,11 @@ Detalle completo en [`Documents/maquina-de-estados.md`](Documents/maquina-de-est
 | Gestión de permisos | Implementado |
 | Cola y envío de correos | Implementado |
 | Perfil y cálculo de metas | Implementado |
-| ResumenDiario y máquina de estados | Entidad y reglas implementadas |
-| Catálogo de alimentos (`Alimento`) | Pendiente |
-| Registro de comidas (`RegistroComida`) | Pendiente |
-| Notificaciones de alerta, dashboard e historial | Pendiente |
+| ResumenDiario y máquina de estados | Implementado (registrar comida y cerrar día) |
+| Catálogo de alimentos (`Alimento`) | Implementado (`POST /api/alimentos`, solo Administrador) |
+| Registro de comidas | Implementado (`POST /api/resumen/comida`) |
+| Historial de resúmenes | Implementado (`GET /api/resumen/historial`, permiso `VerEstadisticas`) |
+| Notificaciones de alerta y dashboard | Pendiente |
 
 ## Gestión de permisos
 
@@ -286,6 +299,13 @@ No necesita base de datos ni la API levantada: son pruebas unitarias sobre `FitT
 4. `RF_GP_02_Estandar_VeSoloSusPropiaSolicitudes` — comprueba que `ListarPendientesAsync` filtra por `SolicitanteId == consultante.Id` (no `!=`).
 5. `RF_GP_06_CambiarEstado_PendienteDesdeAprobada_DevuelveFalseYSigueAprobada`, `RF_GP_06_TransicionesSolicitud_SoloLasPermitidasSonVerdaderas` — comprueban que `TransicionesSolicitud` no permite ir de `Aprobada` a `Pendiente`.
 6. `RF_GP_04_Rechazar_ConMotivo_QuedaRechazadaConMotivoYResueltoPor` — comprueba que `RechazarAsync` asigna `solicitud.MotivoRechazo = motivo;`.
+
+### Práctica 3
+
+1. `Transicion_Cerrado_A_EnProgreso_SeRechazaYElEstadoNoCambia` — comprueba que Cerrado → EnProgreso sigue prohibida.
+2. `EstadoTerminal_Cerrado_NoTieneSalida` — comprueba que desde Cerrado no se sale a ningún estado.
+3. `RegistrarComida_ConTotalSobreLaMeta_QuedaExcedido` — comprueba que una comida que supera la meta deja el día Excedido.
+4. `Historial_SinPermisoAprobado_SeRechaza` — comprueba que el historial se rechaza mientras la solicitud no está aprobada.
 
 ## Contribuir
 
