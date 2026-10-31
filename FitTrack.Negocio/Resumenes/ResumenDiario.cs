@@ -49,7 +49,7 @@ public class ResumenDiario
         bool excede = CaloriasAcumuladas > perfil.CaloriasMeta || ProteinasAcumuladas > perfil.ProteinaMeta || CarbohidratosAcumulados > perfil.CarbohidratosMeta || GrasasAcumuladas > perfil.GrasasMeta;
 
         // 4. Estado que corresponde según el resultado anterior.
-        EstadoResumen nuevo = excede ? EstadoResumen.Excedido : EstadoResumen.DentroDeMeta;
+        EstadoResumen nuevo = EstadoResumen.DentroDeMeta;
 
         // 5. Solo se cambia si es distinto (CambiarEstado valida la transición).
         if (nuevo != EstadoActual)
