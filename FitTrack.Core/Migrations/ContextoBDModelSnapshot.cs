@@ -333,6 +333,44 @@ namespace FitTrack.Core.Migrations
                     b.ToTable("PerfilUsuario");
                 });
 
+            modelBuilder.Entity("FitTrack.Negocio.Resumenes.RegistroComida", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AlimentoId")
+                        .HasColumnType("int");
+
+                    b.Property<double>("Calorias")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Carbohidratos")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Gramos")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Grasas")
+                        .HasColumnType("float");
+
+                    b.Property<double>("Proteinas")
+                        .HasColumnType("float");
+
+                    b.Property<int>("ResumenDiarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AlimentoId");
+
+                    b.HasIndex("ResumenDiarioId");
+
+                    b.ToTable("RegistroComida");
+                });
+
             modelBuilder.Entity("FitTrack.Negocio.Resumenes.ResumenDiario", b =>
                 {
                     b.Property<int>("Id")
@@ -433,6 +471,25 @@ namespace FitTrack.Core.Migrations
                         .IsRequired();
 
                     b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("FitTrack.Negocio.Resumenes.RegistroComida", b =>
+                {
+                    b.HasOne("FitTrack.Negocio.Alimentos.Alimento", "Alimento")
+                        .WithMany()
+                        .HasForeignKey("AlimentoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("FitTrack.Negocio.Resumenes.ResumenDiario", "ResumenDiario")
+                        .WithMany()
+                        .HasForeignKey("ResumenDiarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Alimento");
+
+                    b.Navigation("ResumenDiario");
                 });
 
             modelBuilder.Entity("FitTrack.Negocio.Resumenes.ResumenDiario", b =>

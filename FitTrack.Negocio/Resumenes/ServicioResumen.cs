@@ -66,7 +66,20 @@ public class ServicioResumen
         if (!resumen.RegistrarComida(calorias, proteinas, carbohidratos, grasas, perfil))
             return Resultado.Error("El día está cerrado.");
 
-        // 7. Se guarda todo y se informa el estado resultante del día.
+        // 7. Se guarda el detalle de la comida. Se usa la propiedad ResumenDiario (no el Id)
+        // para que funcione aunque el resumen se acabe de crear y aún no tenga Id.
+        RegistroComida registro = new RegistroComida();
+        registro.ResumenDiario = resumen;
+        registro.AlimentoId = alimento.Id;
+        registro.Gramos = gramos;
+        registro.Calorias = calorias;
+        registro.Proteinas = proteinas;
+        registro.Carbohidratos = carbohidratos;
+        registro.Grasas = grasas;
+        _db.Set<RegistroComida>().Add(registro);
+
+        // 8. Se guarda todo junto: el registro y el resumen van en el mismo SaveChangesAsync,
+        // así nunca queda una cosa sin la otra.
         await _db.SaveChangesAsync();
 
         return Resultado.Ok($"Comida registrada. Estado del día: {resumen.EstadoActual}.");
@@ -106,4 +119,50 @@ public class ServicioResumen
             .OrderBy(r => r.Fecha)
             .ToListAsync();
     }
+
+    // Devuelve el resumen de hoy, el perfil y las comidas registradas, todo junto.
+    // Si el usuario no tiene resumen de hoy o no tiene perfil, devuelve null.
+    public async Task<DatosDia?> ObtenerHoyAsync(int usuarioId)
+    {
+        DateOnly hoy = DateOnly.FromDateTime(DateTime.Now);
+
+        // 1. El resumen del día de hoy (solo lectura).
+        ResumenDiario? resumen = await _db.Set<ResumenDiario>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.UsuarioId == usuarioId && r.Fecha == hoy);
+
+        if (resumen == null)
+            return null;
+
+        // 2. El perfil del usuario (de ahí salen sus metas).
+        PerfilUsuario? perfil = await _db.Set<PerfilUsuario>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.UsuarioId == usuarioId);
+
+        if (perfil == null)
+            return null;
+
+        // 3. Las comidas de ese resumen, con su alimento, en el orden en que se registraron.
+        List<RegistroComida> comidas = await _db.Set<RegistroComida>()
+            .AsNoTracking()
+            .Include(c => c.Alimento)
+            .Where(c => c.ResumenDiarioId == resumen.Id)
+            .OrderBy(c => c.Id)
+            .ToListAsync();
+
+        DatosDia datos = new DatosDia();
+        datos.Resumen = resumen;
+        datos.Perfil = perfil;
+        datos.Comidas = comidas;
+
+        return datos;
+    }
+}
+
+// Solo un paquete para devolver los tres datos juntos.
+public class DatosDia
+{
+    public ResumenDiario Resumen { get; set; } = new ResumenDiario();
+    public PerfilUsuario Perfil { get; set; } = new PerfilUsuario();
+    public List<RegistroComida> Comidas { get; set; } = new List<RegistroComida>();
 }
