@@ -65,6 +65,29 @@ public class AlimentosController : ControllerBase
 
         return r.Exito ? Ok(new { mensaje = r.Mensaje }) : BadRequest(new { mensaje = r.Mensaje });
     }
+
+    // PUT /api/alimentos/{id}
+    // Sin [RequiereRol]: la clase ya exige sesión y la regla de rol vive en el servicio.
+    // Un Estándar solo modifica los suyos; un Administrador solo los básicos.
+    [HttpPut("{id}")]
+    public async Task<IActionResult> Editar(int id, AlimentoDto dto)
+    {
+        Resultado r = await _alimentos.EditarAsync(
+            UsuarioActual, id, dto.Nombre, dto.CaloriasPor100g, dto.ProteinaPor100g,
+            dto.CarbohidratosPor100g, dto.GrasasPor100g);
+
+        return r.Exito ? Ok(new { mensaje = r.Mensaje }) : BadRequest(new { mensaje = r.Mensaje });
+    }
+
+    // DELETE /api/alimentos/{id}
+    // Misma regla de permiso que el PUT: la decide el servicio.
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> Borrar(int id)
+    {
+        Resultado r = await _alimentos.BorrarAsync(UsuarioActual, id);
+
+        return r.Exito ? Ok(new { mensaje = r.Mensaje }) : BadRequest(new { mensaje = r.Mensaje });
+    }
 }
 
 // El "molde" del JSON que llega en el cuerpo de la petición.

@@ -245,6 +245,8 @@ Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el
 | Crear alimento | `POST /api/alimentos` | Solo Administrador (`403` para un Estándar) | Crea un alimento básico (lo ven todos). Cuerpo: `{ "nombre": "Pollo", "caloriasPor100g": 165, "proteinaPor100g": 31, "carbohidratosPor100g": 0, "grasasPor100g": 3.6 }` → `200 OK` `{ "mensaje": "Alimento guardado." }`. `400 BadRequest` si el nombre está vacío o algún valor es negativo. |
 | Listar alimentos | `GET /api/alimentos` | Cualquier usuario con sesión | Sin cuerpo → `200 OK` con la lista de los alimentos básicos y los propios, es decir `{ id, nombre, caloriasPor100g, proteinaPor100g, carbohidratosPor100g, grasasPor100g }`. |
 | Crear alimento personalizado | `POST /api/alimentos/personalizado` | Cualquier usuario con sesión | Mismo cuerpo que el básico → `200 OK` `{ "mensaje": "Alimento guardado." }`. El alimento queda asociado al usuario que lo crea y solo él lo ve. |
+| Editar alimento | `PUT /api/alimentos/{id}` | Cualquier usuario con sesión (un Estándar edita solo los suyos y un Administrador solo los básicos) | Mismo cuerpo que al crear → `200 OK` `{ "mensaje": "Alimento actualizado." }`. `400 BadRequest` con "Alimento no encontrado." o "Solo un Administrador puede modificar alimentos básicos." |
+| Borrar alimento | `DELETE /api/alimentos/{id}` | Cualquier usuario con sesión (mismas reglas que al editar) | Sin cuerpo → `200 OK` `{ "mensaje": "Alimento borrado." }`. `400 BadRequest` con "Alimento no encontrado.", "Solo un Administrador puede modificar alimentos básicos." o "No se puede borrar: el alimento ya se usó en comidas registradas." si ya tiene comidas. |
 | Registrar comida | `POST /api/resumen/comida` | Cualquier usuario con sesión y perfil creado | Cuerpo: `{ "alimentoId": 1, "gramos": 150 }` → `200 OK` `{ "mensaje": "Comida registrada. Estado del día: DentroDeMeta." }`. `400 BadRequest` con "Primero crea tu perfil." si no hay perfil, "Alimento no encontrado." si el id no existe o "El día está cerrado." si ya se cerró. |
 | Cerrar día | `POST /api/resumen/cerrar` | Cualquier usuario con sesión | Sin cuerpo → `200 OK` `{ "mensaje": "Día cerrado." }`. `400 BadRequest` con "Hoy no has registrado comidas." si no hay resumen de hoy o "El día no se puede cerrar en su estado actual." si ya está cerrado. |
 | Historial | `GET /api/resumen/historial` | Usuarios con el permiso `VerEstadisticas` | Sin cuerpo → `200 OK` con la lista de `{ fecha, calorias, proteinas, carbohidratos, grasas, estado }`. Sin el permiso: `403 Forbidden` `{ "mensaje": "No tienes permiso." }`. |
@@ -262,6 +264,7 @@ Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el
 | Perfil y cálculo de metas | Implementado |
 | ResumenDiario y máquina de estados | Implementado (registrar comida y cerrar día) |
 | Catálogo de alimentos (`Alimento`) | Implementado (`POST /api/alimentos`, solo Administrador) |
+| Mantenimiento de alimentos (editar y borrar) | Implementado |
 | Registro de comidas | Implementado (guardadas una por una en la tabla `RegistroComida`) |
 | Historial de resúmenes | Implementado (`GET /api/resumen/historial`, permiso `VerEstadisticas`) |
 | Notificaciones de alerta y dashboard | Pendiente |
