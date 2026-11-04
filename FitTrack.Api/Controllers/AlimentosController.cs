@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FitTrack.Api.Controllers;
 
-// Solo el Administrador puede administrar los alimentos.
-[RequiereRol(Rol.Administrador)]
+// Todas las operaciones exigen sesión; el rol de Administrador se exige solo donde hace falta.
+[RequiereSesion]
 [ApiController]
 [Route("api/alimentos")]
 public class AlimentosController : ControllerBase
@@ -18,13 +18,50 @@ public class AlimentosController : ControllerBase
         _alimentos = alimentos;
     }
 
+    // El atributo ya validó la sesión y dejó aquí al usuario que hace la petición.
+    private Usuario UsuarioActual => (Usuario)HttpContext.Items["Usuario"]!;
+
+    // GET /api/alimentos
+    [HttpGet]
+    public async Task<IActionResult> Listar()
+    {
+        List<Alimento> alimentos = await _alimentos.ListarAsync(UsuarioActual.Id);
+
+        var lista = alimentos.Select(a => new
+        {
+            id = a.Id,
+            nombre = a.Nombre,
+            caloriasPor100g = a.CaloriasPor100g,
+            proteinaPor100g = a.ProteinaPor100g,
+            carbohidratosPor100g = a.CarbohidratosPor100g,
+            grasasPor100g = a.GrasasPor100g
+        });
+
+        return Ok(lista);
+    }
+
     // POST /api/alimentos
+    // Crear un alimento básico (lo ven todos) es cosa solo del Administrador.
+    [RequiereRol(Rol.Administrador)]
     [HttpPost]
     public async Task<IActionResult> Crear(AlimentoDto dto)
     {
         Resultado r = await _alimentos.CrearAsync(
             dto.Nombre, dto.CaloriasPor100g, dto.ProteinaPor100g,
             dto.CarbohidratosPor100g, dto.GrasasPor100g);
+
+        return r.Exito ? Ok(new { mensaje = r.Mensaje }) : BadRequest(new { mensaje = r.Mensaje });
+    }
+
+    // POST /api/alimentos/personalizado
+    // Cualquier usuario con sesión crea un alimento propio: solo él lo verá.
+    [HttpPost("personalizado")]
+    public async Task<IActionResult> CrearPersonalizado(AlimentoDto dto)
+    {
+        Resultado r = await _alimentos.CrearAsync(
+            dto.Nombre, dto.CaloriasPor100g, dto.ProteinaPor100g,
+            dto.CarbohidratosPor100g, dto.GrasasPor100g,
+            UsuarioActual.Id);
 
         return r.Exito ? Ok(new { mensaje = r.Mensaje }) : BadRequest(new { mensaje = r.Mensaje });
     }

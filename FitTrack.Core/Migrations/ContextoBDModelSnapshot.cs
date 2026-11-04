@@ -276,6 +276,9 @@ namespace FitTrack.Core.Migrations
                     b.Property<double>("ProteinaPor100g")
                         .HasColumnType("float");
 
+                    b.Property<int?>("UsuarioCreadorId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.ToTable("Alimento");

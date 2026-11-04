@@ -1,5 +1,6 @@
 using FitTrack.Core.Datos;
 using FitTrack.Core.Usuarios;
+using Microsoft.EntityFrameworkCore;
 
 namespace FitTrack.Negocio.Alimentos;
 
@@ -13,7 +14,7 @@ public class ServicioAlimento
     }
 
     // Crea un alimento nuevo después de validar sus datos.
-    public async Task<Resultado> CrearAsync(string nombre, double calorias, double proteina, double carbohidratos, double grasas)
+    public async Task<Resultado> CrearAsync(string nombre, double calorias, double proteina, double carbohidratos, double grasas, int? usuarioCreadorId = null)
     {
         // 1. Validaciones: si algo falla, se rechaza con un mensaje claro y no se guarda nada.
         if (string.IsNullOrWhiteSpace(nombre))
@@ -40,10 +41,21 @@ public class ServicioAlimento
         alimento.ProteinaPor100g = proteina;
         alimento.CarbohidratosPor100g = carbohidratos;
         alimento.GrasasPor100g = grasas;
+        alimento.UsuarioCreadorId = usuarioCreadorId;
 
         _db.Set<Alimento>().Add(alimento);
         await _db.SaveChangesAsync();
 
         return Resultado.Ok("Alimento guardado.");
+    }
+
+    // Devuelve los alimentos básicos (sin creador) y los que creó el usuario indicado, ordenados por nombre.
+    public async Task<List<Alimento>> ListarAsync(int usuarioId)
+    {
+        return await _db.Set<Alimento>()
+            .AsNoTracking()
+            .Where(a => a.UsuarioCreadorId == null || a.UsuarioCreadorId == usuarioId)
+            .OrderBy(a => a.Nombre)
+            .ToListAsync();
     }
 }

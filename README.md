@@ -242,7 +242,9 @@ Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el
 | Funcionalidad | Ruta | Quién | Cómo provocarla |
 |---|---|---|---|
 | Perfil | `PUT /api/perfil` | Cualquier usuario con sesión | Cuerpo: `{ "edad": 25, "peso": 165, "altura": 70, "sexo": "Masculino", "nivelActividad": "Moderado", "objetivo": "Deficit" }` → `200 OK` con el perfil y las metas calculadas. `400 BadRequest` si algún dato está fuera de rango. |
-| Crear alimento | `POST /api/alimentos` | Solo Administrador (`403` para un Estándar) | Cuerpo: `{ "nombre": "Pollo", "caloriasPor100g": 165, "proteinaPor100g": 31, "carbohidratosPor100g": 0, "grasasPor100g": 3.6 }` → `200 OK` `{ "mensaje": "Alimento guardado." }`. `400 BadRequest` si el nombre está vacío o algún valor es negativo. |
+| Crear alimento | `POST /api/alimentos` | Solo Administrador (`403` para un Estándar) | Crea un alimento básico (lo ven todos). Cuerpo: `{ "nombre": "Pollo", "caloriasPor100g": 165, "proteinaPor100g": 31, "carbohidratosPor100g": 0, "grasasPor100g": 3.6 }` → `200 OK` `{ "mensaje": "Alimento guardado." }`. `400 BadRequest` si el nombre está vacío o algún valor es negativo. |
+| Listar alimentos | `GET /api/alimentos` | Cualquier usuario con sesión | Sin cuerpo → `200 OK` con la lista de los alimentos básicos y los propios, es decir `{ id, nombre, caloriasPor100g, proteinaPor100g, carbohidratosPor100g, grasasPor100g }`. |
+| Crear alimento personalizado | `POST /api/alimentos/personalizado` | Cualquier usuario con sesión | Mismo cuerpo que el básico → `200 OK` `{ "mensaje": "Alimento guardado." }`. El alimento queda asociado al usuario que lo crea y solo él lo ve. |
 | Registrar comida | `POST /api/resumen/comida` | Cualquier usuario con sesión y perfil creado | Cuerpo: `{ "alimentoId": 1, "gramos": 150 }` → `200 OK` `{ "mensaje": "Comida registrada. Estado del día: DentroDeMeta." }`. `400 BadRequest` con "Primero crea tu perfil." si no hay perfil, "Alimento no encontrado." si el id no existe o "El día está cerrado." si ya se cerró. |
 | Cerrar día | `POST /api/resumen/cerrar` | Cualquier usuario con sesión | Sin cuerpo → `200 OK` `{ "mensaje": "Día cerrado." }`. `400 BadRequest` con "Hoy no has registrado comidas." si no hay resumen de hoy o "El día no se puede cerrar en su estado actual." si ya está cerrado. |
 | Historial | `GET /api/resumen/historial` | Usuarios con el permiso `VerEstadisticas` | Sin cuerpo → `200 OK` con la lista de `{ fecha, calorias, proteinas, carbohidratos, grasas, estado }`. Sin el permiso: `403 Forbidden` `{ "mensaje": "No tienes permiso." }`. |
@@ -431,7 +433,6 @@ erDiagram
         float CantidadProteina "Base 100g"
         float CantidadCarbohidratos "Base 100g"
         float CantidadGrasas "Base 100g"
-        boolean EsBasico
         int UsuarioCreadorId FK "Nulo si es basico"
     }
 

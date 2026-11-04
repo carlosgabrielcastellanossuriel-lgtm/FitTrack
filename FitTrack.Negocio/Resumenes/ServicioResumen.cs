@@ -25,10 +25,11 @@ public class ServicioResumen
         if (!(gramos > 0))
             return Resultado.Error("Los gramos deben ser mayores que cero.");
 
-        // 2. El alimento debe existir.
+        // 2. El alimento debe existir y ser visible para el usuario.
+        // Un usuario no puede usar alimentos privados de otro: solo los básicos (sin creador) o los suyos.
         Alimento? alimento = await _db.Set<Alimento>()
             .AsNoTracking()
-            .FirstOrDefaultAsync(a => a.Id == alimentoId);
+            .FirstOrDefaultAsync(a => a.Id == alimentoId && (a.UsuarioCreadorId == null || a.UsuarioCreadorId == usuarioId));
 
         if (alimento == null)
             return Resultado.Error("Alimento no encontrado.");

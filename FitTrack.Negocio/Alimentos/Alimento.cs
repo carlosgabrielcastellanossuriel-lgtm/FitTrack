@@ -9,4 +9,6 @@ public class Alimento
     public double ProteinaPor100g { get; set; }
     public double CarbohidratosPor100g { get; set; }
     public double GrasasPor100g { get; set; }
+    // Si es null, es un alimento básico (lo ven todos). Si tiene un valor, es el Id del usuario que lo creó y solo él lo ve.
+    public int? UsuarioCreadorId { get; set; }
 }
