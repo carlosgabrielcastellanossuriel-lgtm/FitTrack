@@ -22,6 +22,58 @@ public class ResumenController : ControllerBase
     // El atributo ya validó la sesión y dejó aquí al usuario que hace la petición.
     private Usuario UsuarioActual => (Usuario)HttpContext.Items["Usuario"]!;
 
+    // GET /api/resumen/hoy
+    [HttpGet("hoy")]
+    public async Task<IActionResult> Hoy()
+    {
+        DatosDia? datos = await _resumen.ObtenerHoyAsync(UsuarioActual.Id);
+
+        if (datos == null)
+            return NotFound(new { mensaje = "Hoy no has registrado comidas." });
+
+        // Lo que queda de cada meta. Si sale negativo significa que se pasó de la meta.
+        var restante = new
+        {
+            calorias = Math.Round(datos.Perfil.CaloriasMeta - datos.Resumen.CaloriasAcumuladas, 1),
+            proteinas = Math.Round(datos.Perfil.ProteinaMeta - datos.Resumen.ProteinasAcumuladas, 1),
+            carbohidratos = Math.Round(datos.Perfil.CarbohidratosMeta - datos.Resumen.CarbohidratosAcumulados, 1),
+            grasas = Math.Round(datos.Perfil.GrasasMeta - datos.Resumen.GrasasAcumuladas, 1)
+        };
+
+        // Solo se copian los campos que se muestran al cliente.
+        var comidas = datos.Comidas.Select(c => new
+        {
+            alimento = c.Alimento != null ? c.Alimento.Nombre : "",
+            gramos = c.Gramos,
+            calorias = c.Calorias,
+            proteinas = c.Proteinas,
+            carbohidratos = c.Carbohidratos,
+            grasas = c.Grasas
+        });
+
+        return Ok(new
+        {
+            fecha = datos.Resumen.Fecha,
+            estado = datos.Resumen.EstadoActual.ToString(),
+            consumido = new
+            {
+                calorias = datos.Resumen.CaloriasAcumuladas,
+                proteinas = datos.Resumen.ProteinasAcumuladas,
+                carbohidratos = datos.Resumen.CarbohidratosAcumulados,
+                grasas = datos.Resumen.GrasasAcumuladas
+            },
+            metas = new
+            {
+                calorias = datos.Perfil.CaloriasMeta,
+                proteinas = datos.Perfil.ProteinaMeta,
+                carbohidratos = datos.Perfil.CarbohidratosMeta,
+                grasas = datos.Perfil.GrasasMeta
+            },
+            restante,
+            comidas
+        });
+    }
+
     // POST /api/resumen/comida
     [HttpPost("comida")]
     public async Task<IActionResult> RegistrarComida(ComidaDto dto)

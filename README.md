@@ -248,6 +248,7 @@ Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el
 | Registrar comida | `POST /api/resumen/comida` | Cualquier usuario con sesión y perfil creado | Cuerpo: `{ "alimentoId": 1, "gramos": 150 }` → `200 OK` `{ "mensaje": "Comida registrada. Estado del día: DentroDeMeta." }`. `400 BadRequest` con "Primero crea tu perfil." si no hay perfil, "Alimento no encontrado." si el id no existe o "El día está cerrado." si ya se cerró. |
 | Cerrar día | `POST /api/resumen/cerrar` | Cualquier usuario con sesión | Sin cuerpo → `200 OK` `{ "mensaje": "Día cerrado." }`. `400 BadRequest` con "Hoy no has registrado comidas." si no hay resumen de hoy o "El día no se puede cerrar en su estado actual." si ya está cerrado. |
 | Historial | `GET /api/resumen/historial` | Usuarios con el permiso `VerEstadisticas` | Sin cuerpo → `200 OK` con la lista de `{ fecha, calorias, proteinas, carbohidratos, grasas, estado }`. Sin el permiso: `403 Forbidden` `{ "mensaje": "No tienes permiso." }`. |
+| Ver resumen del día | `GET /api/resumen/hoy` | Cualquier usuario con sesión | Sin cuerpo → `200 OK` con `fecha`, `estado`, `consumido`, `metas`, `restante` y las comidas de hoy. `404 NotFound` `{ "mensaje": "Hoy no has registrado comidas." }` si todavía no hay resumen de hoy. |
 
 ## Estado del proyecto
 
@@ -261,7 +262,7 @@ Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el
 | Perfil y cálculo de metas | Implementado |
 | ResumenDiario y máquina de estados | Implementado (registrar comida y cerrar día) |
 | Catálogo de alimentos (`Alimento`) | Implementado (`POST /api/alimentos`, solo Administrador) |
-| Registro de comidas | Implementado (`POST /api/resumen/comida`) |
+| Registro de comidas | Implementado (guardadas una por una en la tabla `RegistroComida`) |
 | Historial de resúmenes | Implementado (`GET /api/resumen/historial`, permiso `VerEstadisticas`) |
 | Notificaciones de alerta y dashboard | Pendiente |
 
@@ -433,7 +434,7 @@ erDiagram
         float CantidadProteina "Base 100g"
         float CantidadCarbohidratos "Base 100g"
         float CantidadGrasas "Base 100g"
-        int UsuarioCreadorId FK "Nulo si es basico"
+        int UsuarioCreadorId "Nulo si es basico; Id del usuario creador"
     }
 
     ResumenDiario {
@@ -451,16 +452,15 @@ erDiagram
         int Id PK
         int ResumenDiarioId FK
         int AlimentoId FK
-        float CantidadConsumida "Gramos"
-        float CaloriasTotales
-        float CantidadProteina
-        float CantidadCarbohidratos
-        float CantidadGrasas
+        float Gramos
+        float Calorias
+        float Proteinas
+        float Carbohidratos
+        float Grasas
     }
 
     %% Relaciones
     Usuario ||--o| PerfilUsuario : "tiene"
-    Usuario |o--o{ Alimento : "crea (alimentos personalizados)"
     Usuario ||--o{ ResumenDiario : "tiene"
     ResumenDiario ||--o{ RegistroComida : "contiene"
     Alimento ||--o{ RegistroComida : "se registra en"
