@@ -1,0 +1,44 @@
+name: fittrack
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${MSSQL_SA_PASSWORD}
+    volumes:
+      # Los datos de SQL Server sobreviven a los reinicios del contenedor.
+      - fittrack_sqldata:/var/opt/mssql
+    # Sin ports: la base solo es accesible desde la red interna de compose.
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          '/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -Q "SELECT 1"',
+        ]
+      interval: 10s
+      retries: 10
+      start_period: 30s
+
+  api:
+    build: .
+    ports:
+      # Único puerto publicado: host 5262 -> contenedor 8080.
+      - "5262:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      # Los documentos subidos se guardan fuera del contenedor.
+      - fittrack_documentos:/app/documentos
+    environment:
+      ConnectionStrings__DefaultConnection: Server=db;Database=FitTrackDB;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
+      FITTRACK_RUTA_DOCUMENTOS: /app/documentos
+      FITTRACK_URL_BASE: ${FITTRACK_URL_BASE}
+      FITTRACK_ADMIN_CORREO: ${FITTRACK_ADMIN_CORREO}
+      FITTRACK_ADMIN_CLAVE: ${FITTRACK_ADMIN_CLAVE}
+      ASPNETCORE_ENVIRONMENT: Development
+
+volumes:
+  fittrack_sqldata:
+  fittrack_documentos:
