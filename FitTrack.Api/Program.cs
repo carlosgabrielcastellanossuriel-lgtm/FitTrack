@@ -1,5 +1,6 @@
 using FitTrack.Core.Correos;
 using FitTrack.Core.Datos;
+using FitTrack.Core.Documentos;
 using FitTrack.Core.Permisos;
 using FitTrack.Core.Usuarios;
 using FitTrack.Negocio.Alimentos;
@@ -29,6 +30,7 @@ ContextoBD.EntidadesNegocio.Add(typeof(RegistroComida));// Le dice a EF que Regi
 builder.Services.AddScoped<ServicioPerfil>();
 builder.Services.AddScoped<ServicioAlimento>();
 builder.Services.AddScoped<ServicioResumen>();
+builder.Services.AddScoped<ServicioDocumentos>();
 
 builder.Services.AddControllers();
 

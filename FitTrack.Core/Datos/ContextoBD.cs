@@ -1,4 +1,5 @@
 ﻿using FitTrack.Core.Correos;
+using FitTrack.Core.Documentos;
 using FitTrack.Core.Permisos;
 using FitTrack.Core.Usuarios;
 using Microsoft.EntityFrameworkCore;
@@ -18,6 +19,8 @@ public class ContextoBD : DbContext
 
     public DbSet<SolicitudPermiso> SolicitudesPermiso => Set<SolicitudPermiso>();
     public DbSet<PermisoUsuario> PermisosUsuario => Set<PermisoUsuario>();
+
+    public DbSet<Documento> Documentos => Set<Documento>();
 
     // Entidades de otros proyectos (como Negocio) que Core no puede ver directamente.
     // La Api las agrega al arrancar y aquí se registran como tablas.

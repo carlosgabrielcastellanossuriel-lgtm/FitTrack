@@ -58,6 +58,45 @@ namespace FitTrack.Core.Migrations
                     b.ToTable("CorreosEnCola");
                 });
 
+            modelBuilder.Entity("FitTrack.Core.Documentos.Documento", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Eliminado")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NombreGuardado")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<long>("Tamano")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Documentos");
+                });
+
             modelBuilder.Entity("FitTrack.Core.Permisos.PermisoUsuario", b =>
                 {
                     b.Property<int>("Id")
@@ -405,6 +444,17 @@ namespace FitTrack.Core.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("ResumenDiario");
+                });
+
+            modelBuilder.Entity("FitTrack.Core.Documentos.Documento", b =>
+                {
+                    b.HasOne("FitTrack.Core.Usuarios.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
                 });
 
             modelBuilder.Entity("FitTrack.Core.Permisos.PermisoUsuario", b =>
