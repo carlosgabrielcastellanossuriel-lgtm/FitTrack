@@ -150,6 +150,8 @@ La Api y SQL Server se pueden levantar juntos con Docker. El único requisito es
    cp .env.example .env
    ```
 
+   > Las credenciales de `.env.example` son solo de ejemplo para uso local. Para cualquier otro uso, cámbialas en tu `.env`.
+
 2. Levanta los servicios:
 
    ```bash

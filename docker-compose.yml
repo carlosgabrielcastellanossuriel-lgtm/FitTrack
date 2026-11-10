@@ -23,8 +23,8 @@ services:
   api:
     build: .
     ports:
-      # Único puerto publicado: host 5262 -> contenedor 8080.
-      - "5262:8080"
+      # Único puerto publicado y solo accesible desde este equipo: host 5262 -> contenedor 8080.
+      - "127.0.0.1:5262:8080"
     depends_on:
       db:
         condition: service_healthy
@@ -34,7 +34,7 @@ services:
     environment:
       ConnectionStrings__DefaultConnection: Server=db;Database=FitTrackDB;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
       FITTRACK_RUTA_DOCUMENTOS: /app/documentos
-      FITTRACK_URL_BASE: ${FITTRACK_URL_BASE}
+      FITTRACK_URL_BASE: ${FITTRACK_URL_BASE:-http://localhost:5262}
       FITTRACK_ADMIN_CORREO: ${FITTRACK_ADMIN_CORREO}
       FITTRACK_ADMIN_CLAVE: ${FITTRACK_ADMIN_CLAVE}
       ASPNETCORE_ENVIRONMENT: Development
