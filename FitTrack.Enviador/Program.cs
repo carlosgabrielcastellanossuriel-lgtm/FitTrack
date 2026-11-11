@@ -11,11 +11,18 @@ string? host = Environment.GetEnvironmentVariable("SMTP_HOST");
 string? puerto = Environment.GetEnvironmentVariable("SMTP_PUERTO");
 string? usuario = Environment.GetEnvironmentVariable("SMTP_USUARIO");
 string? clave = Environment.GetEnvironmentVariable("SMTP_CLAVE");
+string? modo = Environment.GetEnvironmentVariable("SMTP_MODO");
+bool modoConsola = modo == "consola";
+// SMTP_MODO=consola sirve para probar sin servidor de correo;
+// el correo se ve con: docker compose logs enviador
 
 // 2. Si falta alguna variable, avisar y terminar.
-if (string.IsNullOrWhiteSpace(conexion) || string.IsNullOrWhiteSpace(host) ||
-    string.IsNullOrWhiteSpace(puerto) || string.IsNullOrWhiteSpace(usuario) ||
-    string.IsNullOrWhiteSpace(clave))
+//    La conexión siempre hace falta; los datos SMTP solo si no es modo consola.
+bool faltanSmtp = !modoConsola &&
+    (string.IsNullOrWhiteSpace(host) || string.IsNullOrWhiteSpace(puerto) ||
+     string.IsNullOrWhiteSpace(usuario) || string.IsNullOrWhiteSpace(clave));
+
+if (string.IsNullOrWhiteSpace(conexion) || faltanSmtp)
 {
     Console.WriteLine("Faltan variables de entorno.");
     Console.WriteLine("Correos enviados: 0");
@@ -44,13 +51,25 @@ foreach (CorreoEnCola correo in pendientes)
     // el programa no se cae. El correo queda Pendiente para la próxima vez.
     try
     {
-        SmtpClient cliente = new SmtpClient(host, int.Parse(puerto));
-        cliente.EnableSsl = true;                                   // conexión cifrada
-        cliente.Credentials = new NetworkCredential(usuario, clave);
-        cliente.Timeout = 15000;                                    // se rinde a los 15 segundos
+        if (modoConsola)
+        {
+            // Modo consola: no se envía nada, el correo se imprime para verlo en los logs.
+            Console.WriteLine("----------------------------------------");
+            Console.WriteLine($"Para: {correo.Destinatario}");
+            Console.WriteLine($"Asunto: {correo.Asunto}");
+            Console.WriteLine($"Cuerpo: {correo.Cuerpo}");
+            Console.WriteLine("----------------------------------------");
+        }
+        else
+        {
+            SmtpClient cliente = new SmtpClient(host, int.Parse(puerto));
+            cliente.EnableSsl = true;                                   // conexión cifrada
+            cliente.Credentials = new NetworkCredential(usuario, clave);
+            cliente.Timeout = 15000;                                    // se rinde a los 15 segundos
 
-        MailMessage mensaje = new MailMessage(usuario, correo.Destinatario, correo.Asunto, correo.Cuerpo);
-        cliente.Send(mensaje);
+            MailMessage mensaje = new MailMessage(usuario, correo.Destinatario, correo.Asunto, correo.Cuerpo);
+            cliente.Send(mensaje);
+        }
 
         // Esta parte solo se ejecuta si el envío salió bien.
         correo.Estado = EstadoCorreo.Enviado;
