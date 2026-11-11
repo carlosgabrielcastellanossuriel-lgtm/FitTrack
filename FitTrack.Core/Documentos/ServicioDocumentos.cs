@@ -102,7 +102,9 @@ public class ServicioDocumentos
     // ---------- RUTA EN DISCO ----------
     public string RutaDelArchivo(Documento documento)
     {
-        return Path.Combine(Carpeta, documento.NombreGuardado);
+        // PhysicalFile exige una ruta absoluta. Con dotnet run "documentos" es relativa,
+        // así que sin GetFullPath la descarga fallaría con un error 500.
+        return Path.GetFullPath(Path.Combine(Carpeta, documento.NombreGuardado));
     }
 
     // ---------- ELIMINAR (borrado lógico) ----------

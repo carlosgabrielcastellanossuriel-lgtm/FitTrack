@@ -1,9 +1,10 @@
 .git
 .vs
 .vscode
-bin
-obj
+**/bin
+**/obj
 .env
-documentos/
+/documentos/
+/FitTrack.Api/documentos/
 Documents/
 *.md

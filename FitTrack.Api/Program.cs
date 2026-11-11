@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using System.Text.Json.Serialization;
 
-// Le dice al contexto que ResumenDiario (del proyecto Negocio) tambi�n es una tabla.
+// Le dice al contexto que ResumenDiario (del proyecto Negocio) también es una tabla.
 ContextoBD.EntidadesNegocio.Add(typeof(ResumenDiario));
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,7 +24,7 @@ builder.Services.AddScoped<ServicioSesion>();
 builder.Services.AddScoped<ServicioContrasena>();
 builder.Services.AddScoped<ServicioAdministracion>();
 builder.Services.AddScoped<ServicioPermisos>();
-ContextoBD.EntidadesNegocio.Add(typeof(PerfilUsuario));// Le dice a EF que PerfilUsuario (del proyecto Negocio) tambi�n es una tabla.
+ContextoBD.EntidadesNegocio.Add(typeof(PerfilUsuario));// Le dice a EF que PerfilUsuario (del proyecto Negocio) también es una tabla.
 ContextoBD.EntidadesNegocio.Add(typeof(Alimento));// Le dice a EF que Alimento (del proyecto Negocio) también es una tabla.
 ContextoBD.EntidadesNegocio.Add(typeof(RegistroComida));// Le dice a EF que RegistroComida (del proyecto Negocio) también es una tabla.
 builder.Services.AddScoped<ServicioPerfil>();
@@ -37,22 +37,22 @@ builder.Services.AddControllers();
 
                 // SWAGGER
 
-// Hace que los n�meros se describan solo como n�meros (no "n�mero o texto").
-// As� Swagger UI reconoce bien los campos de la ruta, como el {id}.
+// Hace que los números se describan solo como números (no "número o texto").
+// Así Swagger UI reconoce bien los campos de la ruta, como el {id}.
 builder.Services.ConfigureHttpJsonOptions(opciones =>
 {
     opciones.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
 });
 
 // Genera el documento que describe los endpoints.
-// El "transformer" le agrega la opci�n de mandar un token Bearer,
-// para poder probar en Swagger los endpoints que exigen sesi�n.
+// El "transformer" le agrega la opción de mandar un token Bearer,
+// para poder probar en Swagger los endpoints que exigen sesión.
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, context, cancellationToken) =>
     {
         // Declara que existe un esquema de seguridad llamado "Bearer".
-        // Esto hace aparecer el bot�n "Authorize" en la p�gina.
+        // Esto hace aparecer el botón "Authorize" en la página.
         document.Components ??= new OpenApiComponents();
         document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
         {
@@ -64,7 +64,7 @@ builder.Services.AddOpenApi(options =>
         };
 
         // Lo aplica a todos los endpoints: si guardas el token una vez,
-        // Swagger lo manda en cada petici�n.
+        // Swagger lo manda en cada petición.
         foreach (var operacion in document.Paths.Values.SelectMany(ruta => ruta.Operations!))
         {
             operacion.Value.Security ??= [];
@@ -94,7 +94,7 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 
-    // La p�gina de Swagger. Solo en modo Development.
+    // La página de Swagger. Solo en modo Development.
     app.UseSwaggerUI(opciones =>
     {
         opciones.SwaggerEndpoint("/openapi/v1.json", "FitTrack v1");
@@ -102,24 +102,24 @@ if (app.Environment.IsDevelopment())
 }
 
 // Manejador global de errores (RD-08).
-// Envuelve toda petici�n: si algo lanza una excepci�n que nadie atrap�,
-// el usuario recibe un mensaje gen�rico (500) y NUNCA la traza ni la consulta SQL.
+// Envuelve toda petición: si algo lanza una excepción que nadie atrapó,
+// el usuario recibe un mensaje genérico (500) y NUNCA la traza ni la consulta SQL.
 // El detalle real solo se escribe en la consola del servidor, para quien administra.
 app.Use(async (context, next) =>
 {
     try
     {
-        await next();   // contin�a con el resto del proceso normal
+        await next();   // continúa con el resto del proceso normal
     }
     catch (Exception ex)
     {
         app.Logger.LogError(ex, "Error no controlado en {Ruta}", context.Request.Path);
 
-        // Si la respuesta ya empez� a enviarse no se puede cambiar.
+        // Si la respuesta ya empezó a enviarse no se puede cambiar.
         if (!context.Response.HasStarted)
         {
             context.Response.StatusCode = 500;
-            await context.Response.WriteAsJsonAsync(new { mensaje = "Ocurri� un error inesperado. Intenta de nuevo m�s tarde." });
+            await context.Response.WriteAsJsonAsync(new { mensaje = "Ocurrió un error inesperado. Intenta de nuevo más tarde." });
         }
     }
 });
