@@ -100,10 +100,11 @@ Ninguna clave ni contraseña se escribe en el código. Toda la configuración se
 | `FITTRACK_ADMIN_CLAVE` | Api | No | Contraseña del primer Administrador (debe cumplir la política de contraseñas). |
 | `FITTRACK_USDA_CLAVE` | Api | No | Clave de USDA FoodData Central para importar alimentos. |
 | `FITTRACK_CONEXION` | Enviador | Sí | Cadena de conexión a SQL Server (la misma base que usa la Api). |
-| `SMTP_HOST` | Enviador | Sí | Servidor SMTP (ej. `smtp.gmail.com`). |
-| `SMTP_PUERTO` | Enviador | Sí | Puerto SMTP (ej. `587`). La conexión se hace con SSL. |
-| `SMTP_USUARIO` | Enviador | Sí | Usuario SMTP; también es el remitente de los correos. |
-| `SMTP_CLAVE` | Enviador | Sí | Contraseña o clave de aplicación del usuario SMTP. |
+| `SMTP_MODO` | Enviador | No (por defecto envía por SMTP) | Con el valor `consola` los correos se imprimen en los logs en lugar de enviarse, útil para probar sin servidor de correo. Cualquier otro valor envía por SMTP. |
+| `SMTP_HOST` | Enviador | Sí (salvo en modo `consola`) | Servidor SMTP (ej. `smtp.gmail.com`). |
+| `SMTP_PUERTO` | Enviador | Sí (salvo en modo `consola`) | Puerto SMTP (ej. `587`). La conexión se hace con SSL. |
+| `SMTP_USUARIO` | Enviador | Sí (salvo en modo `consola`) | Usuario SMTP; también es el remitente de los correos. |
+| `SMTP_CLAVE` | Enviador | Sí (salvo en modo `consola`) | Contraseña o clave de aplicación del usuario SMTP. |
 | `MSSQL_SA_PASSWORD` | Compose | Sí (solo con Docker) | Contraseña del usuario `sa` de SQL Server en el contenedor. Compose la usa para la base y para la cadena de conexión de la Api. |
 
 Notas:
@@ -139,7 +140,7 @@ export SMTP_CLAVE="tu_clave_de_aplicacion"
 
 ## Contenedor
 
-La Api y SQL Server se pueden levantar juntos con Docker. El único requisito es tener **Docker Desktop** instalado y en ejecución.
+La Api, SQL Server y el Enviador se levantan juntos con Docker. El único requisito es tener **Docker Desktop** instalado y en ejecución.
 
 1. Crea tu archivo `.env` a partir del ejemplo (el `.env` no se sube al repositorio):
 
@@ -167,6 +168,17 @@ La Api y SQL Server se pueden levantar juntos con Docker. El único requisito es
 
    * `docker compose down`: apaga los contenedores, pero **los datos se conservan** en los volúmenes.
    * `docker compose down -v`: además borra los volúmenes, así que también se borran la base de datos y los documentos.
+
+El **Enviador** corre solo, sin pasos manuales: revisa la cola de correos cada 15 segundos dentro de su propio contenedor.
+
+* Con `SMTP_MODO=consola` (el valor del `.env.example`) los correos de activación y recuperación no se envían: se imprimen en los logs. Se leen con:
+
+  ```bash
+  docker compose logs enviador
+  ```
+
+  El enlace o el código se usa tal cual aparece en el log.
+* Con cualquier otro valor de `SMTP_MODO`, los correos se envían por SMTP real usando las variables `SMTP_*` del `.env`.
 
 Los dos volúmenes con nombre son:
 
@@ -351,7 +363,7 @@ Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el
 | Recuperación y cambio de contraseña | Implementado |
 | Administración de usuarios | Implementado |
 | Gestión de permisos | Implementado |
-| Cola y envío de correos | Implementado |
+| Cola y envío de correos | Implementado (el Enviador corre en el contenedor; con `SMTP_MODO=consola` los correos se leen con `docker compose logs enviador`) |
 | Perfil y cálculo de metas | Implementado |
 | ResumenDiario y máquina de estados | Implementado (registrar comida y cerrar día) |
 | Catálogo de alimentos (`Alimento`) | Implementado (`POST /api/alimentos`, solo Administrador) |

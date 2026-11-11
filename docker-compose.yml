@@ -21,7 +21,9 @@ services:
       start_period: 30s
 
   api:
-    build: .
+    build:
+      context: .
+      target: api
     ports:
       # ├Ünico puerto publicado y solo accesible desde este equipo: host 5262 -> contenedor 8080.
       - "127.0.0.1:5262:8080"
@@ -39,6 +41,24 @@ services:
       FITTRACK_ADMIN_CLAVE: ${FITTRACK_ADMIN_CLAVE}
       FITTRACK_USDA_CLAVE: ${FITTRACK_USDA_CLAVE:-}
       ASPNETCORE_ENVIRONMENT: Development
+
+  enviador:
+    build:
+      context: .
+      target: enviador
+    depends_on:
+      api:
+        condition: service_started
+    # Bucle simple: el Enviador revisa la cola y al terminar espera 15 segundos.
+    entrypoint: ["sh", "-c", "while true; do dotnet FitTrack.Enviador.dll; sleep 15; done"]
+    environment:
+      FITTRACK_CONEXION: Server=db;Database=FitTrackDB;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
+      SMTP_MODO: ${SMTP_MODO:-consola}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PUERTO: ${SMTP_PUERTO:-}
+      SMTP_USUARIO: ${SMTP_USUARIO:-}
+      SMTP_CLAVE: ${SMTP_CLAVE:-}
+    # Sin ports: el enviador no expone nada, solo lee la base de datos.
 
 volumes:
   fittrack_sqldata:
