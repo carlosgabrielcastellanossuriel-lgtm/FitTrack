@@ -1,4 +1,4 @@
-name: fittrack
+﻿name: fittrack
 
 services:
   db:
@@ -23,7 +23,7 @@ services:
   api:
     build: .
     ports:
-      # Único puerto publicado y solo accesible desde este equipo: host 5262 -> contenedor 8080.
+      # ├Ünico puerto publicado y solo accesible desde este equipo: host 5262 -> contenedor 8080.
       - "127.0.0.1:5262:8080"
     depends_on:
       db:
@@ -37,6 +37,7 @@ services:
       FITTRACK_URL_BASE: ${FITTRACK_URL_BASE:-http://localhost:5262}
       FITTRACK_ADMIN_CORREO: ${FITTRACK_ADMIN_CORREO}
       FITTRACK_ADMIN_CLAVE: ${FITTRACK_ADMIN_CLAVE}
+      FITTRACK_USDA_CLAVE: ${FITTRACK_USDA_CLAVE:-}
       ASPNETCORE_ENVIRONMENT: Development
 
 volumes:

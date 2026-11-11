@@ -98,6 +98,7 @@ Ninguna clave ni contraseña se escribe en el código. Toda la configuración se
 | `FITTRACK_URL_BASE` | Api | No (por defecto `http://localhost:5262`) | Dirección base que se usa para armar los enlaces de los correos (activación y recuperación). |
 | `FITTRACK_ADMIN_CORREO` | Api | No | Correo del primer Administrador. |
 | `FITTRACK_ADMIN_CLAVE` | Api | No | Contraseña del primer Administrador (debe cumplir la política de contraseñas). |
+| `FITTRACK_USDA_CLAVE` | Api | No | Clave de USDA FoodData Central para importar alimentos. |
 | `FITTRACK_CONEXION` | Enviador | Sí | Cadena de conexión a SQL Server (la misma base que usa la Api). |
 | `SMTP_HOST` | Enviador | Sí | Servidor SMTP (ej. `smtp.gmail.com`). |
 | `SMTP_PUERTO` | Enviador | Sí | Puerto SMTP (ej. `587`). La conexión se hace con SSL. |
@@ -290,6 +291,57 @@ Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el
 | Cerrar día | `POST /api/resumen/cerrar` | Cualquier usuario con sesión | Sin cuerpo → `200 OK` `{ "mensaje": "Día cerrado." }`. `400 BadRequest` con "Hoy no has registrado comidas." si no hay resumen de hoy o "El día no se puede cerrar en su estado actual." si ya está cerrado. |
 | Historial | `GET /api/resumen/historial` | Usuarios con el permiso `VerEstadisticas` | Sin cuerpo → `200 OK` con la lista de `{ fecha, calorias, proteinas, carbohidratos, grasas, estado }`. Sin el permiso: `403 Forbidden` `{ "mensaje": "No tienes permiso." }`. |
 | Ver resumen del día | `GET /api/resumen/hoy` | Cualquier usuario con sesión | Sin cuerpo → `200 OK` con `fecha`, `estado`, `consumido`, `metas`, `restante` y las comidas de hoy. `404 NotFound` `{ "mensaje": "Hoy no has registrado comidas." }` si todavía no hay resumen de hoy. |
+| Importar alimento | `POST /api/alimentos/importar` | Cualquier usuario con sesión | Cuerpo: `{ "nombre": "banana" }` (el nombre se busca en inglés) → `200 OK` `{ "mensaje": "Alimento guardado." }`. Busca el alimento en USDA y lo guarda como alimento personalizado del usuario, con calorías y macros por 100 g. `400 BadRequest` si falta la clave, no es válida, no hay resultados o la API no responde. |
+
+## API externa
+
+* **API:** [USDA FoodData Central](https://fdc.nal.usda.gov), gratuita. Requiere una clave, que se pide en [https://fdc.nal.usda.gov/api-key-signup.html](https://fdc.nal.usda.gov/api-key-signup.html).
+* **Operación que la usa:** `POST /api/alimentos/importar` con cuerpo `{ "nombre": "banana" }` (el nombre se busca en inglés). Busca el alimento en USDA y lo guarda como alimento personalizado del usuario, con calorías y macros por 100 g.
+* **Variable:** `FITTRACK_USDA_CLAVE` (en `.env`; el `.env.example` trae un valor de ejemplo).
+* **Comportamiento controlado:** sin clave, con clave inválida, sin resultados o con la API caída devuelve `400 BadRequest` con un mensaje comprensible, y el resto del proyecto sigue funcionando.
+
+### Ejemplo real de la respuesta de USDA (sin la clave)
+
+```json
+{
+  "foods": [
+    {
+      "fdcId": 1105314,
+      "description": "Banana, raw",
+      "dataType": "SR Legacy",
+      "foodNutrients": [
+        { "nutrientId": 1003, "nutrientName": "Protein", "nutrientNumber": "203", "unitName": "G", "value": 1.09 },
+        { "nutrientId": 1004, "nutrientName": "Total lipid (fat)", "nutrientNumber": "204", "unitName": "G", "value": 0.33 },
+        { "nutrientId": 1005, "nutrientName": "Carbohydrate, by difference", "nutrientNumber": "205", "unitName": "G", "value": 22.84 },
+        { "nutrientId": 1008, "nutrientName": "Energy", "nutrientNumber": "208", "unitName": "KCAL", "value": 89 }
+      ]
+    }
+  ]
+}
+```
+
+### Ejemplo real de la respuesta de FitTrack
+
+`POST /api/alimentos/importar`:
+
+```json
+{ "mensaje": "Alimento guardado." }
+```
+
+`GET /api/alimentos`:
+
+```json
+[
+  {
+    "id": 12,
+    "nombre": "Banana, raw",
+    "caloriasPor100g": 89,
+    "proteinaPor100g": 1.09,
+    "carbohidratosPor100g": 22.84,
+    "grasasPor100g": 0.33
+  }
+]
+```
 
 ## Estado del proyecto
 
@@ -306,6 +358,7 @@ Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el
 | Mantenimiento de alimentos (editar y borrar) | Implementado |
 | Registro de comidas | Implementado (guardadas una por una en la tabla `RegistroComida`) |
 | Historial de resúmenes | Implementado (`GET /api/resumen/historial`, permiso `VerEstadisticas`) |
+| API externa (USDA) | Implementado (`POST /api/alimentos/importar`) |
 | Notificaciones de alerta y dashboard | Pendiente |
 | Contenedor Docker | Implementado (`docker compose up --build`) |
 
@@ -336,6 +389,14 @@ dotnet test FitTrack.Tests
 ```
 
 No necesita base de datos ni la API levantada: son pruebas unitarias sobre `FitTrack.Core` y `FitTrack.Negocio`.
+
+Las pruebas de la importación desde USDA (`FitTrack.Tests/UsdaTests.cs`) usan un `HttpMessageHandler` falso, así que tampoco necesitan internet ni una clave real:
+
+1. `RF_API_01_SinClave_FallaYNoCreaAlimento` — sin clave, falla con mensaje y no guarda nada.
+2. `RF_API_02_ApiCaida_FallaConMensajeControlado` — si la API lanza `HttpRequestException`, devuelve un error controlado sin lanzar excepción.
+3. `RF_API_03_ClaveRechazada_MuestraMensajeDeClaveInvalida` — una respuesta `403` muestra "La clave de USDA no es válida.".
+4. `RF_API_04_SinResultados_FallaConMensajeDeNoEncontrado` — con `"foods": []` falla con "No se encontró ese alimento en USDA.".
+5. `RF_API_05_RespuestaValida_CreaAlimentoConValoresYUsuario` — con una respuesta válida crea el alimento con sus valores por 100 g y el usuario creador.
 
 ## Defectos
 
