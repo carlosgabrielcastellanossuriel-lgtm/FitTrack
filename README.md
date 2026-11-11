@@ -99,6 +99,7 @@ Ninguna clave ni contraseña se escribe en el código. Toda la configuración se
 | `FITTRACK_ADMIN_CORREO` | Api | No | Correo del primer Administrador. |
 | `FITTRACK_ADMIN_CLAVE` | Api | No | Contraseña del primer Administrador (debe cumplir la política de contraseñas). |
 | `FITTRACK_USDA_CLAVE` | Api | No | Clave de USDA FoodData Central para importar alimentos. |
+| `FITTRACK_RUTA_DOCUMENTOS` | Api | No (por defecto `documentos`) | Carpeta donde se guardan los archivos subidos por los usuarios. Si es relativa se resuelve contra el directorio desde donde se ejecuta la Api. En Compose vale `/app/documentos` (volumen `fittrack_documentos`). |
 | `FITTRACK_CONEXION` | Enviador | Sí | Cadena de conexión a SQL Server (la misma base que usa la Api). |
 | `SMTP_MODO` | Enviador | No (por defecto envía por SMTP) | Con el valor `consola` los correos se imprimen en los logs en lugar de enviarse, útil para probar sin servidor de correo. Cualquier otro valor envía por SMTP. |
 | `SMTP_HOST` | Enviador | Sí (salvo en modo `consola`) | Servidor SMTP (ej. `smtp.gmail.com`). |
@@ -268,6 +269,20 @@ Valores aceptados:
 | POST | `/api/usuarios/{id}/reactivar` | Reactiva al usuario. |
 | POST | `/api/usuarios/{id}/forzar-restablecimiento` | Invalida su contraseña y le envía un código de recuperación. |
 
+### Documentos (`/api/documentos`) — Sesión
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| POST | `/api/documentos` | Sube un archivo. Va como `form-data` en el campo `archivo` y el máximo es 10 MB → `200 OK` `{ "mensaje": "Documento subido." }`. `400 BadRequest` con "Debes adjuntar un archivo.", "El archivo está vacío." o "El archivo supera el tamaño máximo de 10 MB." |
+| GET | `/api/documentos` | Sin cuerpo → `200 OK` con la lista de `{ id, nombre, tipo, tamano, fecha, usuarioId }`. El Administrador ve todos los documentos; un Estándar solo los suyos. |
+| GET | `/api/documentos/{id}/descargar` | Devuelve el archivo con su nombre y su tipo originales. `404 NotFound` `{ "mensaje": "Documento no encontrado." }` si no existe, es de otro usuario, está eliminado o ya no está en disco. |
+| DELETE | `/api/documentos/{id}` | Borrado lógico → `200 OK` `{ "mensaje": "Documento eliminado." }`. `400 BadRequest` con "Documento no encontrado." si no existe o es de otro usuario. |
+
+Notas:
+
+* En la base de datos solo se guardan los metadatos (tabla `Documentos`); el contenido va a disco con un nombre GUID.
+* El borrado es lógico: el registro deja de listarse y de descargarse, pero el archivo sigue en disco.
+
 ## Cálculo de metas
 
 `CalculadoraMetas` usa la fórmula **Mifflin-St Jeor** (con peso en libras y altura en pulgadas):
@@ -363,6 +378,7 @@ Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el
 | Recuperación y cambio de contraseña | Implementado |
 | Administración de usuarios | Implementado |
 | Gestión de permisos | Implementado |
+| Manejador de documentos (subir, listar, descargar, eliminar) | Implementado (`/api/documentos`, metadatos en la tabla `Documentos` y archivos en disco) |
 | Cola y envío de correos | Implementado (el Enviador corre en el contenedor; con `SMTP_MODO=consola` los correos se leen con `docker compose logs enviador`) |
 | Perfil y cálculo de metas | Implementado |
 | ResumenDiario y máquina de estados | Implementado (registrar comida y cerrar día) |
@@ -575,9 +591,21 @@ erDiagram
         float Grasas
     }
 
+    Documento {
+        int Id PK
+        varchar Nombre "Nombre original del archivo"
+        varchar Tipo "Content type"
+        bigint Tamano "Bytes"
+        datetime Fecha
+        int UsuarioId FK "Dueño del documento"
+        varchar NombreGuardado "Nombre GUID en disco"
+        boolean Eliminado "Borrado lógico"
+    }
+
     %% Relaciones
     Usuario ||--o| PerfilUsuario : "tiene"
     Usuario ||--o{ ResumenDiario : "tiene"
+    Usuario ||--o{ Documento : "sube"
     ResumenDiario ||--o{ RegistroComida : "contiene"
     Alimento ||--o{ RegistroComida : "se registra en"
 ```
