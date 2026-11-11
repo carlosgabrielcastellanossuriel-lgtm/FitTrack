@@ -50,7 +50,13 @@ services:
       api:
         condition: service_started
     # Bucle simple: el Enviador revisa la cola y al terminar espera 15 segundos.
-    entrypoint: ["sh", "-c", "while true; do dotnet FitTrack.Enviador.dll; sleep 15; done"]
+    # Con SIGTERM (docker stop) se deja terminar la ejecución en curso y no se inicia otra.
+    entrypoint:
+      - sh
+      - -c
+      - parar=0; trap 'parar=1' TERM INT; while [ "$$parar" = 0 ]; do dotnet FitTrack.Enviador.dll; [ "$$parar" = 1 ] && break; sleep 15 & wait $$!; done
+    # Plazo para que la ejecución en curso acabe antes de que Docker la mate.
+    stop_grace_period: 120s
     environment:
       FITTRACK_CONEXION: Server=db;Database=FitTrackDB;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;
       SMTP_MODO: ${SMTP_MODO:-consola}
