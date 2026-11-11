@@ -82,6 +82,9 @@ var app = builder.Build();
 // Crea el primer Administrador si existen las variables de entorno.
 using (IServiceScope scope = app.Services.CreateScope())
 {
+    // Aplica las migraciones al arrancar para que nadie tenga que crear la base a mano.
+    ContextoBD db = scope.ServiceProvider.GetRequiredService<ContextoBD>();
+    db.Database.Migrate();
     ServicioAdministracion administracion = scope.ServiceProvider.GetRequiredService<ServicioAdministracion>();
     await administracion.CrearAdministradorInicialAsync();
 }

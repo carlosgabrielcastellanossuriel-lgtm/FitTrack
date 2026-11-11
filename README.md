@@ -104,6 +104,7 @@ Ninguna clave ni contraseña se escribe en el código. Toda la configuración se
 | `SMTP_PUERTO` | Enviador | Sí | Puerto SMTP (ej. `587`). La conexión se hace con SSL. |
 | `SMTP_USUARIO` | Enviador | Sí | Usuario SMTP; también es el remitente de los correos. |
 | `SMTP_CLAVE` | Enviador | Sí | Contraseña o clave de aplicación del usuario SMTP. |
+| `MSSQL_SA_PASSWORD` | Compose | Sí (solo con Docker) | Contraseña del usuario `sa` de SQL Server en el contenedor. Compose la usa para la base y para la cadena de conexión de la Api. |
 
 Notas:
 
@@ -135,6 +136,44 @@ export SMTP_CLAVE="tu_clave_de_aplicacion"
 ```
 
 > No subas archivos `.env` ni claves al repositorio. El `.gitignore` ya excluye los archivos `*.env`.
+
+## Contenedor
+
+La Api y SQL Server se pueden levantar juntos con Docker. El único requisito es tener **Docker Desktop** instalado y en ejecución.
+
+1. Crea tu archivo `.env` a partir del ejemplo (el `.env` no se sube al repositorio):
+
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   > Las credenciales de `.env.example` son solo de ejemplo para uso local. Para cualquier otro uso, cámbialas en tu `.env`.
+
+2. Levanta los servicios:
+
+   ```bash
+   docker compose up --build
+   ```
+
+   La primera vez tarda un poco, porque SQL Server debe arrancar y pasar su *healthcheck* antes de que arranque la Api, además de compilarse la imagen.
+
+3. La Api responde en `http://localhost:5262` y Swagger está en `http://localhost:5262/swagger`.
+
+4. Para detenerlo:
+
+   * `docker compose down`: apaga los contenedores, pero **los datos se conservan** en los volúmenes.
+   * `docker compose down -v`: además borra los volúmenes, así que también se borran la base de datos y los documentos.
+
+Los dos volúmenes con nombre son:
+
+* `fittrack_sqldata`: los datos de SQL Server (montado en `/var/opt/mssql`).
+* `fittrack_documentos`: los documentos subidos (montado en `/app/documentos`).
+
+El **Administrador inicial** se crea al arrancar la Api con `FITTRACK_ADMIN_CORREO` y `FITTRACK_ADMIN_CLAVE` del `.env`. Solo se publica el puerto `5262`; SQL Server no es accesible desde fuera.
 
 ## Correos: cómo funcionan
 
@@ -321,6 +360,7 @@ Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el
 | Historial de resúmenes | Implementado (`GET /api/resumen/historial`, permiso `VerEstadisticas`) |
 | API externa (USDA) | Implementado (`POST /api/alimentos/importar`) |
 | Notificaciones de alerta y dashboard | Pendiente |
+| Contenedor Docker | Implementado (`docker compose up --build`) |
 
 ## Gestión de permisos
 
