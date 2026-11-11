@@ -29,6 +29,7 @@ ContextoBD.EntidadesNegocio.Add(typeof(Alimento));// Le dice a EF que Alimento (
 ContextoBD.EntidadesNegocio.Add(typeof(RegistroComida));// Le dice a EF que RegistroComida (del proyecto Negocio) también es una tabla.
 builder.Services.AddScoped<ServicioPerfil>();
 builder.Services.AddScoped<ServicioAlimento>();
+builder.Services.AddHttpClient<ServicioUsda>();
 builder.Services.AddScoped<ServicioResumen>();
 builder.Services.AddScoped<ServicioDocumentos>();
 

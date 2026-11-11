@@ -12,10 +12,12 @@ namespace FitTrack.Api.Controllers;
 public class AlimentosController : ControllerBase
 {
     private readonly ServicioAlimento _alimentos;
+    private readonly ServicioUsda _usda;
 
-    public AlimentosController(ServicioAlimento alimentos)
+    public AlimentosController(ServicioAlimento alimentos, ServicioUsda usda)
     {
         _alimentos = alimentos;
+        _usda = usda;
     }
 
     // El atributo ya validó la sesión y dejó aquí al usuario que hace la petición.
@@ -66,6 +68,16 @@ public class AlimentosController : ControllerBase
         return r.Exito ? Ok(new { mensaje = r.Mensaje }) : BadRequest(new { mensaje = r.Mensaje });
     }
 
+    // POST /api/alimentos/importar
+    // Busca el alimento en USDA y lo guarda como alimento personalizado del usuario.
+    [HttpPost("importar")]
+    public async Task<IActionResult> Importar(ImportarAlimentoDto dto)
+    {
+        Resultado r = await _usda.ImportarAsync(UsuarioActual, dto.Nombre);
+
+        return r.Exito ? Ok(new { mensaje = r.Mensaje }) : BadRequest(new { mensaje = r.Mensaje });
+    }
+
     // PUT /api/alimentos/{id}
     // Sin [RequiereRol]: la clase ya exige sesión y la regla de rol vive en el servicio.
     // Un Estándar solo modifica los suyos; un Administrador solo los básicos.
@@ -98,4 +110,10 @@ public class AlimentoDto
     public double ProteinaPor100g { get; set; }
     public double CarbohidratosPor100g { get; set; }
     public double GrasasPor100g { get; set; }
+}
+
+// El "molde" del JSON para importar un alimento desde USDA.
+public class ImportarAlimentoDto
+{
+    public string Nombre { get; set; } = string.Empty;
 }
