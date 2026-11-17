@@ -240,4 +240,135 @@ public class ResumenDiarioTests
         // Verificar
         Assert.NotNull(historial);
     }
+
+    [Fact]
+    public async Task Promedio_SinPermisoAprobado_DevuelveNull()
+    {
+        // Preparar
+        ContextoBD db = CrearContexto();
+        Usuario estandar = CrearUsuario(db, 1, Rol.Estandar);
+
+        ServicioPermisos permisos = new ServicioPermisos(db);
+        await permisos.CrearAsync(estandar, Permiso.VerEstadisticas);   // queda pendiente, sin aprobar
+
+        ServicioResumen resumen = new ServicioResumen(db, permisos);
+
+        // Actuar
+        PromedioPeriodo? promedio = await resumen.PromedioAsync(estandar, 7);
+
+        // Verificar
+        Assert.Null(promedio);
+    }
+
+    [Fact]
+    public async Task Promedio_ConPermisoYDosResumenesEnRango_PromediaCalorias()
+    {
+        // Preparar
+        ContextoBD db = CrearContexto();
+        Usuario admin = CrearUsuario(db, 1, Rol.Administrador);
+        Usuario estandar = CrearUsuario(db, 2, Rol.Estandar);
+
+        ServicioPermisos permisos = new ServicioPermisos(db);
+        await permisos.CrearAsync(estandar, Permiso.VerEstadisticas);
+
+        int idSolicitud = db.SolicitudesPermiso.First().Id;
+        await permisos.AprobarAsync(idSolicitud, admin);
+
+        DateOnly hoy = DateOnly.FromDateTime(DateTime.Now);
+
+        ResumenDiario dia1 = new ResumenDiario();
+        dia1.UsuarioId = estandar.Id;
+        dia1.Fecha = hoy;
+        dia1.CaloriasAcumuladas = 2000;
+        db.Set<ResumenDiario>().Add(dia1);
+
+        ResumenDiario dia2 = new ResumenDiario();
+        dia2.UsuarioId = estandar.Id;
+        dia2.Fecha = hoy.AddDays(-1);
+        dia2.CaloriasAcumuladas = 1000;
+        db.Set<ResumenDiario>().Add(dia2);
+
+        await db.SaveChangesAsync();
+
+        ServicioResumen resumen = new ServicioResumen(db, permisos);
+
+        // Actuar
+        PromedioPeriodo? promedio = await resumen.PromedioAsync(estandar, 7);
+
+        // Verificar
+        Assert.NotNull(promedio);
+        Assert.Equal(2, promedio.DiasRegistrados);
+        Assert.Equal(1500, promedio.Calorias);
+    }
+
+    [Fact]
+    public async Task Promedio_ResumenFueraDelRango_NoCuenta()
+    {
+        // Preparar
+        ContextoBD db = CrearContexto();
+        Usuario admin = CrearUsuario(db, 1, Rol.Administrador);
+        Usuario estandar = CrearUsuario(db, 2, Rol.Estandar);
+
+        ServicioPermisos permisos = new ServicioPermisos(db);
+        await permisos.CrearAsync(estandar, Permiso.VerEstadisticas);
+
+        int idSolicitud = db.SolicitudesPermiso.First().Id;
+        await permisos.AprobarAsync(idSolicitud, admin);
+
+        DateOnly hoy = DateOnly.FromDateTime(DateTime.Now);
+
+        // Dentro del rango de 7 días.
+        ResumenDiario reciente = new ResumenDiario();
+        reciente.UsuarioId = estandar.Id;
+        reciente.Fecha = hoy;
+        reciente.CaloriasAcumuladas = 1000;
+        db.Set<ResumenDiario>().Add(reciente);
+
+        // Más viejo que el rango (hace 10 días).
+        ResumenDiario viejo = new ResumenDiario();
+        viejo.UsuarioId = estandar.Id;
+        viejo.Fecha = hoy.AddDays(-10);
+        viejo.CaloriasAcumuladas = 5000;
+        db.Set<ResumenDiario>().Add(viejo);
+
+        await db.SaveChangesAsync();
+
+        ServicioResumen resumen = new ServicioResumen(db, permisos);
+
+        // Actuar
+        PromedioPeriodo? promedio = await resumen.PromedioAsync(estandar, 7);
+
+        // Verificar
+        Assert.NotNull(promedio);
+        Assert.Equal(1, promedio.DiasRegistrados);
+        Assert.Equal(1000, promedio.Calorias);
+    }
+
+    [Fact]
+    public async Task Promedio_SinResumenes_DevuelveCeros()
+    {
+        // Preparar
+        ContextoBD db = CrearContexto();
+        Usuario admin = CrearUsuario(db, 1, Rol.Administrador);
+        Usuario estandar = CrearUsuario(db, 2, Rol.Estandar);
+
+        ServicioPermisos permisos = new ServicioPermisos(db);
+        await permisos.CrearAsync(estandar, Permiso.VerEstadisticas);
+
+        int idSolicitud = db.SolicitudesPermiso.First().Id;
+        await permisos.AprobarAsync(idSolicitud, admin);
+
+        ServicioResumen resumen = new ServicioResumen(db, permisos);
+
+        // Actuar
+        PromedioPeriodo? promedio = await resumen.PromedioAsync(estandar, 7);
+
+        // Verificar
+        Assert.NotNull(promedio);
+        Assert.Equal(0, promedio.DiasRegistrados);
+        Assert.Equal(0, promedio.Calorias);
+        Assert.Equal(0, promedio.Proteinas);
+        Assert.Equal(0, promedio.Carbohidratos);
+        Assert.Equal(0, promedio.Grasas);
+    }
 }

@@ -120,6 +120,51 @@ public class ServicioResumen
             .ToListAsync();
     }
 
+    // Promedia los acumulados de los últimos días. Solo con el permiso VerEstadisticas.
+    public async Task<PromedioPeriodo?> PromedioAsync(Usuario usuario, int dias)
+    {
+        if (!await _permisos.TieneAsync(usuario.Id, Permiso.VerEstadisticas)) return null;
+
+        // El rango va desde hoy menos (dias - 1) hasta hoy.
+        DateOnly hoy = DateOnly.FromDateTime(DateTime.Now);
+        DateOnly desde = hoy.AddDays(-(dias - 1));
+
+        // AsNoTracking: solo se lee.
+        List<ResumenDiario> resumenes = await _db.Set<ResumenDiario>()
+            .AsNoTracking()
+            .Where(r => r.UsuarioId == usuario.Id && r.Fecha >= desde && r.Fecha <= hoy)
+            .ToListAsync();
+
+        PromedioPeriodo promedio = new PromedioPeriodo();
+        promedio.Dias = dias;
+        promedio.DiasRegistrados = resumenes.Count;
+
+        // Si no hay resumenes, todo queda en 0 (y no se divide entre cero).
+        if (resumenes.Count > 0)
+        {
+            double sumaCalorias = 0;
+            double sumaProteinas = 0;
+            double sumaCarbohidratos = 0;
+            double sumaGrasas = 0;
+
+            foreach (ResumenDiario resumen in resumenes)
+            {
+                sumaCalorias += resumen.CaloriasAcumuladas;
+                sumaProteinas += resumen.ProteinasAcumuladas;
+                sumaCarbohidratos += resumen.CarbohidratosAcumulados;
+                sumaGrasas += resumen.GrasasAcumuladas;
+            }
+
+            // Se promedia solo entre los días que existen y se redondea a 1 decimal.
+            promedio.Calorias = Math.Round(sumaCalorias / resumenes.Count, 1);
+            promedio.Proteinas = Math.Round(sumaProteinas / resumenes.Count, 1);
+            promedio.Carbohidratos = Math.Round(sumaCarbohidratos / resumenes.Count, 1);
+            promedio.Grasas = Math.Round(sumaGrasas / resumenes.Count, 1);
+        }
+
+        return promedio;
+    }
+
     // Devuelve el resumen de hoy, el perfil y las comidas registradas, todo junto.
     // Si el usuario no tiene resumen de hoy o no tiene perfil, devuelve null.
     public async Task<DatosDia?> ObtenerHoyAsync(int usuarioId)
@@ -165,4 +210,15 @@ public class DatosDia
     public ResumenDiario Resumen { get; set; } = new ResumenDiario();
     public PerfilUsuario Perfil { get; set; } = new PerfilUsuario();
     public List<RegistroComida> Comidas { get; set; } = new List<RegistroComida>();
+}
+
+// Solo un paquete para devolver los promedios de un período.
+public class PromedioPeriodo
+{
+    public int Dias { get; set; }
+    public int DiasRegistrados { get; set; }
+    public double Calorias { get; set; }
+    public double Proteinas { get; set; }
+    public double Carbohidratos { get; set; }
+    public double Grasas { get; set; }
 }
