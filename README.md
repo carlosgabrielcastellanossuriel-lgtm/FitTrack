@@ -317,6 +317,7 @@ Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el
 | Registrar comida | `POST /api/resumen/comida` | Cualquier usuario con sesión y perfil creado | Cuerpo: `{ "alimentoId": 1, "gramos": 150 }` → `200 OK` `{ "mensaje": "Comida registrada. Estado del día: DentroDeMeta." }`. `400 BadRequest` con "Primero crea tu perfil." si no hay perfil, "Alimento no encontrado." si el id no existe o "El día está cerrado." si ya se cerró. |
 | Cerrar día | `POST /api/resumen/cerrar` | Cualquier usuario con sesión | Sin cuerpo → `200 OK` `{ "mensaje": "Día cerrado." }`. `400 BadRequest` con "Hoy no has registrado comidas." si no hay resumen de hoy o "El día no se puede cerrar en su estado actual." si ya está cerrado. |
 | Historial | `GET /api/resumen/historial` | Usuarios con el permiso `VerEstadisticas` | Sin cuerpo → `200 OK` con la lista de `{ fecha, calorias, proteinas, carbohidratos, grasas, estado }`. Sin el permiso: `403 Forbidden` `{ "mensaje": "No tienes permiso." }`. |
+| Promedios semanal y mensual | `GET /api/resumen/promedio?periodo=semana\|mes` | Usuarios con el permiso `VerEstadisticas` | `semana` = 7 días, `mes` = 30 días → `200 OK` con `{ "periodo": "semana", "diasRegistrados": 2, "promedio": { "calorias": 1500, "proteinas": 120.5, "carbohidratos": 180, "grasas": 55.3 } }`. Sin el permiso: `403 Forbidden` `{ "mensaje": "No tienes permiso." }`. |
 | Ver resumen del día | `GET /api/resumen/hoy` | Cualquier usuario con sesión | Sin cuerpo → `200 OK` con `fecha`, `estado`, `consumido`, `metas`, `restante` y las comidas de hoy. `404 NotFound` `{ "mensaje": "Hoy no has registrado comidas." }` si todavía no hay resumen de hoy. |
 | Importar alimento | `POST /api/alimentos/importar` | Cualquier usuario con sesión | Cuerpo: `{ "nombre": "banana" }` (el nombre se busca en inglés) → `200 OK` `{ "mensaje": "Alimento guardado." }`. Busca el alimento en USDA y lo guarda como alimento personalizado del usuario, con calorías y macros por 100 g. `400 BadRequest` si falta la clave, no es válida, no hay resultados o la API no responde. |
 
@@ -386,6 +387,7 @@ Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el
 | Mantenimiento de alimentos (editar y borrar) | Implementado |
 | Registro de comidas | Implementado (guardadas una por una en la tabla `RegistroComida`) |
 | Historial de resúmenes | Implementado (`GET /api/resumen/historial`, permiso `VerEstadisticas`) |
+| Promedios semanal y mensual | Implementado |
 | API externa (USDA) | Implementado (`POST /api/alimentos/importar`) |
 | Notificaciones de alerta y dashboard | Pendiente |
 | Contenedor Docker | Implementado (`docker compose up --build`) |

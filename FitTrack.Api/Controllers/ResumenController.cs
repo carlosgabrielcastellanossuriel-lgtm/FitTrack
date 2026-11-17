@@ -114,6 +114,39 @@ public class ResumenController : ControllerBase
 
         return Ok(lista);
     }
+
+    // GET /api/resumen/promedio?periodo=semana|mes   (requiere el permiso VerEstadisticas)
+    [HttpGet("promedio")]
+    public async Task<IActionResult> Promedio([FromQuery] string? periodo)
+    {
+        // El periodo solo puede ser semana (7 días) o mes (30 días).
+        int dias;
+
+        if (periodo == "semana")
+            dias = 7;
+        else if (periodo == "mes")
+            dias = 30;
+        else
+            return BadRequest(new { mensaje = "Periodo no válido. Usa semana o mes." });
+
+        PromedioPeriodo? promedio = await _resumen.PromedioAsync(UsuarioActual, dias);
+
+        if (promedio == null)
+            return StatusCode(403, new { mensaje = "No tienes permiso." });
+
+        return Ok(new
+        {
+            periodo,
+            diasRegistrados = promedio.DiasRegistrados,
+            promedio = new
+            {
+                calorias = promedio.Calorias,
+                proteinas = promedio.Proteinas,
+                carbohidratos = promedio.Carbohidratos,
+                grasas = promedio.Grasas
+            }
+        });
+    }
 }
 
 // El "molde" del JSON que llega en el cuerpo de la petición.
