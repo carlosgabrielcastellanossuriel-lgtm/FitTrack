@@ -35,6 +35,18 @@ builder.Services.AddScoped<ServicioDocumentos>();
 
 builder.Services.AddControllers();
 
+// CORS: permite que el frontend (Vite en el puerto 5173) llame a la API.
+// Acepta cualquier encabezado y cualquier método.
+builder.Services.AddCors(opciones =>
+{
+    opciones.AddPolicy("Frontend", politica =>
+    {
+        politica.WithOrigins("http://localhost:5173")
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+    });
+});
+
                 // SWAGGER
 
 // Hace que los números se describan solo como números (no "número o texto").
@@ -100,6 +112,9 @@ if (app.Environment.IsDevelopment())
         opciones.SwaggerEndpoint("/openapi/v1.json", "FitTrack v1");
     });
 }
+
+// CORS antes del manejador global de errores.
+app.UseCors("Frontend");
 
 // Manejador global de errores (RD-08).
 // Envuelve toda petición: si algo lanza una excepción que nadie atrapó,
