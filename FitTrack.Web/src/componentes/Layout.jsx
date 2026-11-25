@@ -1,18 +1,60 @@
-import { Outlet } from 'react-router-dom'
+import { Link, Outlet, useNavigate } from 'react-router-dom'
+import { useSesion } from '../SesionContext.jsx'
 
 // Barra superior y contenido centrado.
-// Cada pantalla agregará sus enlaces en la parte derecha de la barra.
 function Layout() {
+  const { usuario, cerrarSesion } = useSesion()
+  const navigate = useNavigate()
+
+  async function salir() {
+    await cerrarSesion()
+    navigate('/login')
+  }
+
   return (
     <div className="min-h-screen bg-white text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100">
       <header className="border-b border-zinc-200 dark:border-zinc-800">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-          <span className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-4">
+          <Link to="/" className="text-lg font-semibold text-emerald-600 dark:text-emerald-400">
             FitTrack
-          </span>
+          </Link>
 
           <nav className="flex items-center gap-4 text-sm">
-            {/* Aquí se agregarán los enlaces de cada pantalla. */}
+            {usuario ? (
+              <>
+                <span className="hidden text-zinc-500 sm:inline dark:text-zinc-400">
+                  {usuario.correo}
+                </span>
+                <Link
+                  to="/cuenta"
+                  className="text-zinc-600 transition hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400"
+                >
+                  Cuenta
+                </Link>
+                <button
+                  type="button"
+                  onClick={salir}
+                  className="text-zinc-600 transition hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400"
+                >
+                  Salir
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="text-zinc-600 transition hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400"
+                >
+                  Entrar
+                </Link>
+                <Link
+                  to="/registro"
+                  className="font-medium text-emerald-600 transition hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
+                >
+                  Crear cuenta
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       </header>

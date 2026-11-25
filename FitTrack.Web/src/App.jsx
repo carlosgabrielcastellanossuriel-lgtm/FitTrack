@@ -1,16 +1,49 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { SesionProvider } from './SesionContext.jsx'
 import Layout from './componentes/Layout.jsx'
+import RutaProtegida from './componentes/RutaProtegida.jsx'
+import Cuenta from './paginas/Cuenta.jsx'
 import Inicio from './paginas/Inicio.jsx'
+import Login from './paginas/Login.jsx'
+import RecuperarContrasena from './paginas/RecuperarContrasena.jsx'
+import ReenviarActivacion from './paginas/ReenviarActivacion.jsx'
+import Registro from './paginas/Registro.jsx'
+import RestablecerContrasena from './paginas/RestablecerContrasena.jsx'
 
 // Enrutador principal de la aplicación.
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route element={<Layout />}>
-          <Route path="/" element={<Inicio />} />
-        </Route>
-      </Routes>
+      <SesionProvider>
+        <Routes>
+          <Route element={<Layout />}>
+            {/* Páginas públicas */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/registro" element={<Registro />} />
+            <Route path="/reenviar-activacion" element={<ReenviarActivacion />} />
+            <Route path="/recuperar-contrasena" element={<RecuperarContrasena />} />
+            <Route path="/restablecer-contrasena" element={<RestablecerContrasena />} />
+
+            {/* Páginas que exigen sesión */}
+            <Route
+              path="/"
+              element={
+                <RutaProtegida>
+                  <Inicio />
+                </RutaProtegida>
+              }
+            />
+            <Route
+              path="/cuenta"
+              element={
+                <RutaProtegida>
+                  <Cuenta />
+                </RutaProtegida>
+              }
+            />
+          </Route>
+        </Routes>
+      </SesionProvider>
     </BrowserRouter>
   )
 }
