@@ -32,12 +32,14 @@ A través de un catálogo interactivo de alimentos —que integra opciones prede
 | `FitTrack.Core` | Biblioteca | Capa transversal: usuarios, sesiones, contraseñas, cola de correos, `ContextoBD` y migraciones. |
 | `FitTrack.Negocio` | Biblioteca | Lógica del dominio nutricional: perfil, cálculo de metas y resumen diario con su máquina de estados. |
 | `FitTrack.Enviador` | Aplicación de consola | Lee los correos pendientes de la cola y los envía por SMTP. |
+| `FitTrack.Web` | Aplicación web (React + Vite) | Interfaz de usuario construida con Tailwind CSS v4, React Router y Recharts. |
 
-Dependencias: `Api` → `Core` y `Negocio`; `Negocio` → `Core`; `Enviador` → `Core`. `Core` no depende de ningún otro proyecto.
+Dependencias: `Api` → `Core` y `Negocio`; `Negocio` → `Core`; `Enviador` → `Core`; `Web` consume `Api` por HTTP. `Core` no depende de ningún otro proyecto.
 
 ## Prerrequisitos
 
 * [.NET SDK 10](https://dotnet.microsoft.com/download)
+* [Node.js](https://nodejs.org/) LTS (para ejecutar el frontend `FitTrack.Web`)
 * Microsoft SQL Server (o SQL Server Express / LocalDB)
 * Herramienta de migraciones de EF Core: `dotnet tool install --global dotnet-ef`
 * Una cuenta SMTP (por ejemplo, Gmail con contraseña de aplicación) si quieres que se envíen los correos de activación y recuperación
@@ -88,6 +90,38 @@ La API queda disponible en `http://localhost:5262`. Con el perfil `https` (`dotn
 ```bash
 dotnet run --project FitTrack.Enviador
 ```
+
+## Frontend
+
+El proyecto `FitTrack.Web` implementa la interfaz web con React, Vite, Tailwind CSS v4, React Router y Recharts.
+
+Para levantarlo en desarrollo desde **PowerShell**:
+
+```powershell
+cd FitTrack.Web; npm install; npm run dev
+```
+
+* La aplicación queda disponible en `http://localhost:5173`.
+* La API (`FitTrack.Api`) debe estar levantada (por defecto en `http://localhost:5262`, configurable mediante `VITE_API_URL` en `FitTrack.Web/.env`). La política CORS de la API (`Frontend`) permite peticiones desde el origen `http://localhost:5173`.
+* La sesión se valida y cierra mediante `GET /api/auth/yo` y `POST /api/auth/logout`.
+
+### Pantallas y endpoints utilizados
+
+| Pantalla | Ruta | Acceso | Endpoints que usa |
+|---|---|---|---|
+| Login | `/login` | Público | `POST /api/auth/login`, `GET /api/auth/yo` |
+| Registro | `/registro` | Público | `POST /api/auth/registro` |
+| Reenviar activación | `/reenviar-activacion` | Público | `POST /api/auth/reenviar-activacion` |
+| Recuperar contraseña | `/recuperar-contrasena` | Público | `POST /api/contrasena/recuperar` |
+| Restablecer contraseña | `/restablecer-contrasena` | Público | `POST /api/contrasena/restablecer` |
+| Dashboard (Resumen de hoy) | `/` | Sesión | `GET /api/resumen/hoy`, `GET /api/alimentos`, `POST /api/resumen/comida`, `POST /api/resumen/cerrar` |
+| Alimentos | `/alimentos` | Sesión | `GET /api/alimentos`, `POST /api/alimentos` (Administrador), `POST /api/alimentos/personalizado`, `PUT /api/alimentos/{id}`, `DELETE /api/alimentos/{id}`, `POST /api/alimentos/importar` |
+| Documentos | `/documentos` | Sesión | `GET /api/documentos`, `POST /api/documentos`, `GET /api/documentos/{id}/descargar`, `DELETE /api/documentos/{id}` |
+| Historial | `/historial` | Sesión (permiso `VerEstadisticas`) | `GET /api/resumen/historial`, `POST /api/permisos` |
+| Permisos | `/permisos` | Sesión | `GET /api/permisos/pendientes`, `POST /api/permisos`, `POST /api/permisos/{id}/aprobar` (Administrador), `POST /api/permisos/{id}/rechazar` (Administrador), `GET /api/permisos/accion-protegida` |
+| Usuarios | `/usuarios` | Solo Administrador | `GET /api/usuarios`, `PUT /api/usuarios/{id}/rol`, `POST /api/usuarios/{id}/desactivar`, `POST /api/usuarios/{id}/reactivar`, `POST /api/usuarios/{id}/forzar-restablecimiento` |
+| Perfil | `/perfil` | Sesión | `GET /api/perfil`, `PUT /api/perfil` |
+| Mi cuenta | `/cuenta` | Sesión | `POST /api/contrasena/cambiar`, `POST /api/auth/logout` |
 
 ## Variables de entorno
 
@@ -141,7 +175,7 @@ export SMTP_CLAVE="tu_clave_de_aplicacion"
 
 ## Contenedor
 
-La Api, SQL Server y el Enviador se levantan juntos con Docker. El único requisito es tener **Docker Desktop** instalado y en ejecución.
+La Api, el servicio web (`web`), SQL Server y el Enviador se levantan juntos con Docker. El único requisito es tener **Docker Desktop** instalado y en ejecución.
 
 1. Crea tu archivo `.env` a partir del ejemplo (el `.env` no se sube al repositorio):
 
@@ -163,7 +197,7 @@ La Api, SQL Server y el Enviador se levantan juntos con Docker. El único requis
 
    La primera vez tarda un poco, porque SQL Server debe arrancar y pasar su *healthcheck* antes de que arranque la Api, además de compilarse la imagen.
 
-3. La Api responde en `http://localhost:5262` y Swagger está en `http://localhost:5262/swagger`.
+3. El servicio web (`web`) responde en `http://localhost:5173`, la Api responde en `http://localhost:5262` y Swagger está en `http://localhost:5262/swagger`.
 
 4. Para detenerlo:
 
@@ -186,7 +220,7 @@ Los dos volúmenes con nombre son:
 * `fittrack_sqldata`: los datos de SQL Server (montado en `/var/opt/mssql`).
 * `fittrack_documentos`: los documentos subidos (montado en `/app/documentos`).
 
-El **Administrador inicial** se crea al arrancar la Api con `FITTRACK_ADMIN_CORREO` y `FITTRACK_ADMIN_CLAVE` del `.env`. Solo se publica el puerto `5262`; SQL Server no es accesible desde fuera.
+El **Administrador inicial** se crea al arrancar la Api con `FITTRACK_ADMIN_CORREO` y `FITTRACK_ADMIN_CLAVE` del `.env`. Solo se publican los puertos `5173` (servicio web) y `5262` (Api); SQL Server y el Enviador no son accesibles desde fuera.
 
 ## Correos: cómo funcionan
 
@@ -389,7 +423,8 @@ Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el
 | Historial de resúmenes | Implementado (`GET /api/resumen/historial`, permiso `VerEstadisticas`) |
 | Promedios semanal y mensual | Implementado |
 | API externa (USDA) | Implementado (`POST /api/alimentos/importar`) |
-| Notificaciones de alerta y dashboard | Pendiente |
+| Notificaciones de alerta y dashboard | Implementado (las alertas se muestran con la etiqueta "Excedido", sin correos) |
+| Frontend web (`FitTrack.Web`) | Implementado (React, Vite, Tailwind v4, React Router y Recharts) |
 | Contenedor Docker | Implementado (`docker compose up --build`) |
 
 ## Gestión de permisos
@@ -497,8 +532,12 @@ flowchart TD
 **Diagrama Componentes**
 ```mermaid
 flowchart TB
+    subgraph FrontendWeb ["Contenedor: Frontend (React + Vite)"]
+        UI["FitTrack.Web\n(React, Tailwind v4, Recharts)"]
+    end
+
     subgraph WebAPI ["Contenedor: Web API (.NET)"]
-        
+
         subgraph Core ["Capa Core (Fundación Transversal)"]
             CA["1. Control de acceso"]
             GP["2. Gestión de permisos"]
@@ -515,6 +554,12 @@ flowchart TB
     end
 
     DB[("Base de Datos Persistente\n(SQL / EF Core)")]
+
+    %% El frontend llama a la API por HTTP (Bearer token)
+    UI -->|"HTTP REST / Bearer token\npuerto 5173 → API 5262"| CA
+    UI -->|"HTTP REST"| GP
+    UI -->|"HTTP REST"| MD
+    UI -->|"HTTP REST"| GN
 
     %% Relaciones del Módulo hacia el Core (Dependencia en un solo sentido)
     GN -->|"Consulta usuario activo mediante IControlAcceso"| CA
