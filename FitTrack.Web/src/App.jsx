@@ -4,7 +4,7 @@ import Layout from './componentes/Layout.jsx'
 import RutaProtegida from './componentes/RutaProtegida.jsx'
 import Alimentos from './paginas/Alimentos.jsx'
 import Cuenta from './paginas/Cuenta.jsx'
-import Inicio from './paginas/Inicio.jsx'
+import Dashboard from './paginas/Dashboard.jsx'
 import Login from './paginas/Login.jsx'
 import Perfil from './paginas/Perfil.jsx'
 import RecuperarContrasena from './paginas/RecuperarContrasena.jsx'
@@ -31,7 +31,7 @@ function App() {
               path="/"
               element={
                 <RutaProtegida>
-                  <Inicio />
+                  <Dashboard />
                 </RutaProtegida>
               }
             />
