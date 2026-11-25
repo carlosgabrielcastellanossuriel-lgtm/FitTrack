@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { SesionProvider } from './SesionContext.jsx'
 import Layout from './componentes/Layout.jsx'
 import RutaProtegida from './componentes/RutaProtegida.jsx'
+import Alimentos from './paginas/Alimentos.jsx'
 import Cuenta from './paginas/Cuenta.jsx'
 import Inicio from './paginas/Inicio.jsx'
 import Login from './paginas/Login.jsx'
@@ -31,6 +32,14 @@ function App() {
               element={
                 <RutaProtegida>
                   <Inicio />
+                </RutaProtegida>
+              }
+            />
+            <Route
+              path="/alimentos"
+              element={
+                <RutaProtegida>
+                  <Alimentos />
                 </RutaProtegida>
               }
             />
