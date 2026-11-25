@@ -66,6 +66,19 @@ services:
       SMTP_CLAVE: ${SMTP_CLAVE:-}
     # Sin ports: el enviador no expone nada, solo lee la base de datos.
 
+  web:
+    build:
+      context: .
+      target: web
+      args:
+        VITE_API_URL: http://localhost:5262
+    ports:
+      # Solo accesible desde este equipo: host 5173 -> contenedor 80.
+      - "127.0.0.1:5173:80"
+    depends_on:
+      api:
+        condition: service_started
+
 volumes:
   fittrack_sqldata:
   fittrack_documentos:

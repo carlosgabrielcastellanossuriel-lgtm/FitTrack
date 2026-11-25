@@ -443,3 +443,7 @@ $RECYCLE.BIN/
 # Documentos subidos por los usuarios
 /documentos/
 /FitTrack.Api/documentos/
+
+# Documentos de personalizacion para los agentes
+AGENTS.md
+CODE_REVIEW.md
