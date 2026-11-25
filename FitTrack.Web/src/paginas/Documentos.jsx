@@ -125,6 +125,8 @@ function Documentos() {
   }
 
   function alSoltar(evento) {
+    // Mientras se sube un archivo, ignorar el soltar para no perder la selección
+    if (subiendo) return
     evento.preventDefault()
     setArrastrando(false)
     elegirArchivo(evento.dataTransfer.files?.[0])
@@ -229,7 +231,7 @@ function Documentos() {
             onDragEnter={alArrastrarSobre}
             onDragLeave={alSalirArrastre}
             onDrop={alSoltar}
-            className={`flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-4 py-10 text-center transition ${
+            className={`flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-4 py-10 text-center transition focus-within:ring-2 focus-within:ring-emerald-500 dark:focus-within:ring-emerald-400 ${
               arrastrando
                 ? 'border-emerald-500 bg-emerald-50 dark:border-emerald-400 dark:bg-emerald-950'
                 : 'border-zinc-300 dark:border-zinc-700'
@@ -255,7 +257,8 @@ function Documentos() {
               id="archivo-documento"
               type="file"
               onChange={alElegir}
-              className="hidden"
+              className="sr-only"
+              disabled={subiendo}
             />
           </div>
 
