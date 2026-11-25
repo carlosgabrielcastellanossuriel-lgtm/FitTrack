@@ -13,6 +13,7 @@ import RecuperarContrasena from './paginas/RecuperarContrasena.jsx'
 import ReenviarActivacion from './paginas/ReenviarActivacion.jsx'
 import Registro from './paginas/Registro.jsx'
 import RestablecerContrasena from './paginas/RestablecerContrasena.jsx'
+import Usuarios from './paginas/Usuarios.jsx'
 
 // Enrutador principal de la aplicación.
 function App() {
@@ -66,6 +67,14 @@ function App() {
               element={
                 <RutaProtegida>
                   <Permisos />
+                </RutaProtegida>
+              }
+            />
+            <Route
+              path="/usuarios"
+              element={
+                <RutaProtegida soloAdmin>
+                  <Usuarios />
                 </RutaProtegida>
               }
             />
