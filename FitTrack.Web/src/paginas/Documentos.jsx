@@ -236,7 +236,7 @@ function Documentos() {
               arrastrando
                 ? 'border-emerald-500 bg-emerald-50 dark:border-emerald-400 dark:bg-emerald-950'
                 : 'border-zinc-300 dark:border-zinc-700'
-            }`}
+            } ${subiendo ? 'opacity-50' : ''}`}
           >
             <p className="text-sm text-zinc-600 dark:text-zinc-300">
               {archivo ? archivo.name : 'Suelta el archivo en esta zona'}
@@ -250,7 +250,11 @@ function Documentos() {
 
             <label
               htmlFor="archivo-documento"
-              className="cursor-pointer rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:border-emerald-500 hover:text-emerald-600 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-emerald-400 dark:hover:text-emerald-400"
+              className={`rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-600 transition dark:border-zinc-700 dark:text-zinc-300 ${
+                subiendo
+                  ? 'cursor-not-allowed'
+                  : 'cursor-pointer hover:border-emerald-500 hover:text-emerald-600 dark:hover:border-emerald-400 dark:hover:text-emerald-400'
+              }`}
             >
               Elegir archivo
             </label>

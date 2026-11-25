@@ -72,7 +72,9 @@ export async function descargarArchivo(ruta, nombre) {
       // Si la respuesta no es JSON, se usa el mensaje general.
     }
 
-    throw new Error(mensaje)
+    const error = new Error(mensaje)
+    error.estado = respuesta.status
+    throw error
   }
 
   const blob = await respuesta.blob()
