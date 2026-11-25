@@ -32,6 +32,12 @@ function Layout() {
                   Alimentos
                 </Link>
                 <Link
+                  to="/permisos"
+                  className="text-zinc-600 transition hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400"
+                >
+                  Permisos
+                </Link>
+                <Link
                   to="/perfil"
                   className="text-zinc-600 transition hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400"
                 >
