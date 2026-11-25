@@ -7,6 +7,7 @@ import Cuenta from './paginas/Cuenta.jsx'
 import Dashboard from './paginas/Dashboard.jsx'
 import Login from './paginas/Login.jsx'
 import Perfil from './paginas/Perfil.jsx'
+import Permisos from './paginas/Permisos.jsx'
 import RecuperarContrasena from './paginas/RecuperarContrasena.jsx'
 import ReenviarActivacion from './paginas/ReenviarActivacion.jsx'
 import Registro from './paginas/Registro.jsx'
@@ -48,6 +49,14 @@ function App() {
               element={
                 <RutaProtegida>
                   <Cuenta />
+                </RutaProtegida>
+              }
+            />
+            <Route
+              path="/permisos"
+              element={
+                <RutaProtegida>
+                  <Permisos />
                 </RutaProtegida>
               }
             />
