@@ -47,3 +47,47 @@ export async function llamarApi(ruta, opciones = {}) {
 
   return datos
 }
+
+// Descarga un archivo de la API. El endpoint exige el token, así que no sirve
+// un enlace normal: se pide con fetch, se guarda como blob y se dispara la descarga.
+export async function descargarArchivo(ruta, nombre) {
+  const token = localStorage.getItem('fittrack_token')
+
+  const respuesta = await fetch(`${URL_BASE}${ruta}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  })
+
+  // Si falla, se intenta leer el { mensaje } que manda la API.
+  if (!respuesta.ok) {
+    if (respuesta.status === 401 && token) {
+      localStorage.removeItem('fittrack_token')
+      window.location.href = '/login'
+    }
+
+    let mensaje = 'No se pudo descargar el archivo.'
+    try {
+      const datos = await respuesta.json()
+      if (datos?.mensaje) mensaje = datos.mensaje
+    } catch {
+      // Si la respuesta no es JSON, se usa el mensaje general.
+    }
+
+    const error = new Error(mensaje)
+    error.estado = respuesta.status
+    throw error
+  }
+
+  const blob = await respuesta.blob()
+
+  // Se crea un enlace temporal con el blob y se hace clic para descargarlo.
+  const url = URL.createObjectURL(blob)
+  const enlace = document.createElement('a')
+  enlace.href = url
+  enlace.download = nombre || 'documento'
+  document.body.appendChild(enlace)
+  enlace.click()
+  enlace.remove()
+
+  // Se libera la memoria del blob.
+  URL.revokeObjectURL(url)
+}

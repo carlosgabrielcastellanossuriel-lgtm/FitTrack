@@ -5,6 +5,7 @@ import RutaProtegida from './componentes/RutaProtegida.jsx'
 import Alimentos from './paginas/Alimentos.jsx'
 import Cuenta from './paginas/Cuenta.jsx'
 import Dashboard from './paginas/Dashboard.jsx'
+import Documentos from './paginas/Documentos.jsx'
 import Historial from './paginas/Historial.jsx'
 import Login from './paginas/Login.jsx'
 import Perfil from './paginas/Perfil.jsx'
@@ -43,6 +44,14 @@ function App() {
               element={
                 <RutaProtegida>
                   <Alimentos />
+                </RutaProtegida>
+              }
+            />
+            <Route
+              path="/documentos"
+              element={
+                <RutaProtegida>
+                  <Documentos />
                 </RutaProtegida>
               }
             />
