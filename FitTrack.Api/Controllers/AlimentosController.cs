@@ -36,7 +36,9 @@ public class AlimentosController : ControllerBase
             caloriasPor100g = a.CaloriasPor100g,
             proteinaPor100g = a.ProteinaPor100g,
             carbohidratosPor100g = a.CarbohidratosPor100g,
-            grasasPor100g = a.GrasasPor100g
+            grasasPor100g = a.GrasasPor100g,
+            // true = alimento propio del usuario, false = alimento básico.
+            personalizado = a.UsuarioCreadorId != null
         });
 
         return Ok(lista);
