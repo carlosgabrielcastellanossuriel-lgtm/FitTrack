@@ -33,7 +33,7 @@ function Layout() {
                 </Link>
                 <Link
                   to="/documentos"
-                  className="text-zinc-600 transition hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-600"
+                  className="text-zinc-600 transition hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400"
                 >
                   Documentos
                 </Link>

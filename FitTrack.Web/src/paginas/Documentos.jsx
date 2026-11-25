@@ -116,19 +116,20 @@ function Documentos() {
 
   function alArrastrarSobre(evento) {
     evento.preventDefault()
-    setArrastrando(true)
+    if (!subiendo) setArrastrando(true)
   }
 
   function alSalirArrastre(evento) {
     evento.preventDefault()
+    if (evento.currentTarget.contains(evento.relatedTarget)) return
     setArrastrando(false)
   }
 
   function alSoltar(evento) {
-    // Mientras se sube un archivo, ignorar el soltar para no perder la selección
-    if (subiendo) return
     evento.preventDefault()
     setArrastrando(false)
+    // Mientras se sube un archivo, ignorar el soltar para no perder la selección
+    if (subiendo) return
     elegirArchivo(evento.dataTransfer.files?.[0])
   }
 
