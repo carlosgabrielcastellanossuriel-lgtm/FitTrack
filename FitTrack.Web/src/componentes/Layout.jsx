@@ -43,6 +43,14 @@ function Layout() {
                 >
                   Permisos
                 </Link>
+                {usuario.rol === 'Administrador' && (
+                  <Link
+                    to="/usuarios"
+                    className="text-zinc-600 transition hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400"
+                  >
+                    Usuarios
+                  </Link>
+                )}
                 <Link
                   to="/perfil"
                   className="text-zinc-600 transition hover:text-emerald-600 dark:text-zinc-400 dark:hover:text-emerald-400"
