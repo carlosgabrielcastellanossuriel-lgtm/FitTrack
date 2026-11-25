@@ -3,7 +3,10 @@
 .vscode
 **/bin
 **/obj
+**/node_modules
+**/dist
 .env
+**/.env
 /documentos/
 /FitTrack.Api/documentos/
 Documents/

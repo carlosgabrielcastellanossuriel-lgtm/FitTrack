@@ -17,3 +17,19 @@ ENTRYPOINT ["dotnet", "FitTrack.Api.dll"]
 FROM mcr.microsoft.com/dotnet/runtime:10.0 AS enviador
 WORKDIR /app
 COPY --from=build /app/enviador .
+
+# Etapa de compilación del frontend: instala dependencias y genera la carpeta dist.
+FROM node:22-alpine AS web-build
+WORKDIR /web
+COPY FitTrack.Web/package*.json ./
+RUN npm ci
+COPY FitTrack.Web/ .
+ARG VITE_API_URL
+ENV VITE_API_URL=$VITE_API_URL
+RUN npm run build
+
+# Etapa final "web": sirve la carpeta dist del frontend con Nginx.
+FROM nginx:alpine AS web
+COPY FitTrack.Web/nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=web-build /web/dist /usr/share/nginx/html
+EXPOSE 80
