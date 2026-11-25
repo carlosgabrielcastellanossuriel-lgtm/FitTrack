@@ -5,6 +5,7 @@ import RutaProtegida from './componentes/RutaProtegida.jsx'
 import Cuenta from './paginas/Cuenta.jsx'
 import Inicio from './paginas/Inicio.jsx'
 import Login from './paginas/Login.jsx'
+import Perfil from './paginas/Perfil.jsx'
 import RecuperarContrasena from './paginas/RecuperarContrasena.jsx'
 import ReenviarActivacion from './paginas/ReenviarActivacion.jsx'
 import Registro from './paginas/Registro.jsx'
@@ -38,6 +39,14 @@ function App() {
               element={
                 <RutaProtegida>
                   <Cuenta />
+                </RutaProtegida>
+              }
+            />
+            <Route
+              path="/perfil"
+              element={
+                <RutaProtegida>
+                  <Perfil />
                 </RutaProtegida>
               }
             />
