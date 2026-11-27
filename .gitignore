@@ -445,5 +445,5 @@ $RECYCLE.BIN/
 /FitTrack.Api/documentos/
 
 # Documentos de personalizacion para los agentes
-AGENTS.md
+FitTrack.Web/AGENTS.md
 CODE_REVIEW.md
