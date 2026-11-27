@@ -292,6 +292,31 @@ El sistema genera notificaciones internas para el usuario (consultables desde la
 3. Provoca una notificación (por ejemplo, creando una solicitud con `POST /api/permisos`).
 4. Tras aproximadamente un minuto (el enviador corre cada 15 segundos), consulta `GET /api/correos` como `Administrador`: verás el correo con `estado: "Fallido"`, `intentos: 3`, `fechaUltimoIntento` y el detalle del error en `ultimoError`, y no se volverá a intentar.
 
+## Reportes
+
+Los reportes se calculan con agregación en la base de datos (`GroupBy`), así que devuelven una fila por categoría en lugar del listado completo de registros. Un usuario `Estandar` solo ve sus propios datos; un `Administrador` ve los de todos.
+
+El reporte de días por estado responde: **"¿cuántos días terminé dentro de la meta o excedido y con cuántas calorías en promedio?"**.
+
+### Endpoints de reportes
+
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET | `/api/reportes/solicitudes-permiso?desde=2026-11-01&hasta=2026-11-30` | Sesión | Totales de solicitudes de permiso agrupados por estado: `{ estado, total }`. El Estándar solo ve las suyas; el Administrador ve todas. |
+| GET | `/api/reportes/dias-por-estado?desde=2026-11-01&hasta=2026-11-30` | Sesión | Días de resumen agrupados por estado con el promedio de calorías: `{ estado, dias, promedioCalorias }`. El Estándar solo ve sus días; el Administrador ve los de todos. |
+
+`desde` y `hasta` son opcionales. El día `hasta` se incluye completo. Si ambos vienen y `desde` es mayor que `hasta`, responde `400 BadRequest` `{ "mensaje": "La fecha desde no puede ser mayor que hasta." }`.
+
+Ejemplos en PowerShell (con el token de la sesión en `$token`):
+
+```powershell
+# Solicitudes de permiso por estado en noviembre de 2026
+Invoke-RestMethod "http://localhost:5262/api/reportes/solicitudes-permiso?desde=2026-11-01&hasta=2026-11-30" -Headers @{ Authorization = "Bearer $token" }
+
+# Días por estado en la primera quincena de noviembre de 2026
+Invoke-RestMethod "http://localhost:5262/api/reportes/dias-por-estado?desde=2026-11-01&hasta=2026-11-15" -Headers @{ Authorization = "Bearer $token" }
+```
+
 ## Reglas de seguridad
 
 * **Contraseñas:** mínimo 8 caracteres, con al menos una letra y un número. Se guardan con hash BCrypt (con sal), nunca en texto plano.
@@ -380,6 +405,15 @@ Notas:
 
 * En la base de datos solo se guardan los metadatos (tabla `Documentos`); el contenido va a disco con un nombre GUID.
 * El borrado es lógico: el registro deja de listarse y de descargarse, pero el archivo sigue en disco.
+
+### Reportes (`/api/reportes`) — Sesión
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET | `/api/reportes/solicitudes-permiso?desde=2026-11-01&hasta=2026-11-30` | Solicitudes de permiso agrupadas por estado: `{ estado, total }`. El Estándar solo ve las suyas; el Administrador ve todas. |
+| GET | `/api/reportes/dias-por-estado?desde=2026-11-01&hasta=2026-11-30` | Días de resumen agrupados por estado con el promedio de calorías: `{ estado, dias, promedioCalorias }`. El Estándar solo ve sus días; el Administrador ve los de todos. |
+
+`desde` y `hasta` son opcionales. Si `desde` es mayor que `hasta`, responde `400 BadRequest`.
 
 ## Cálculo de metas
 
@@ -488,6 +522,7 @@ Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el
 | Promedios semanal y mensual | Implementado |
 | API externa (USDA) | Implementado (`POST /api/alimentos/importar`) |
 | Notificaciones | Implementado (`/api/notificaciones` con preferencias por usuario; el día `Excedido` y las solicitudes de permiso generan una notificación interna y un correo por la cola, que se puede desactivar) |
+| Reportes | Implementado (`/api/reportes/solicitudes-permiso` y `/api/reportes/dias-por-estado` con agregación `GroupBy` en la base de datos; el Estándar solo ve sus datos y el Administrador ve todos) |
 | Frontend web (`FitTrack.Web`) | Implementado (React, Vite, Tailwind v4, React Router y Recharts) |
 | Contenedor Docker | Implementado (`docker compose up --build`) |
 

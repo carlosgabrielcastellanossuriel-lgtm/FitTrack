@@ -3,6 +3,7 @@ using FitTrack.Core.Datos;
 using FitTrack.Core.Documentos;
 using FitTrack.Core.Notificaciones;
 using FitTrack.Core.Permisos;
+using FitTrack.Core.Reportes;
 using FitTrack.Core.Usuarios;
 using FitTrack.Negocio.Alimentos;
 using FitTrack.Negocio.Perfiles;
@@ -26,6 +27,7 @@ builder.Services.AddScoped<ServicioSesion>();
 builder.Services.AddScoped<ServicioContrasena>();
 builder.Services.AddScoped<ServicioAdministracion>();
 builder.Services.AddScoped<ServicioPermisos>();
+builder.Services.AddScoped<ServicioReportes>();
 ContextoBD.EntidadesNegocio.Add(typeof(PerfilUsuario));// Le dice a EF que PerfilUsuario (del proyecto Negocio) también es una tabla.
 ContextoBD.EntidadesNegocio.Add(typeof(Alimento));// Le dice a EF que Alimento (del proyecto Negocio) también es una tabla.
 ContextoBD.EntidadesNegocio.Add(typeof(RegistroComida));// Le dice a EF que RegistroComida (del proyecto Negocio) también es una tabla.
