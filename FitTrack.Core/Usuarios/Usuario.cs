@@ -11,4 +11,5 @@ public class Usuario
     public DateTime? BloqueadoHasta { get; set; }      // si tiene fecha futura, está bloqueado}
 
     public Rol Rol { get; set; } = Rol.Estandar;    // todo usuario nuevo es Estándar
+    public bool NotificarPorCorreo { get; set; } = true;
 }

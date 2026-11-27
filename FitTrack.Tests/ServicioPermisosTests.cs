@@ -1,5 +1,7 @@
 using System.Linq;
+using FitTrack.Core.Correos;
 using FitTrack.Core.Datos;
+using FitTrack.Core.Notificaciones;
 using FitTrack.Core.Permisos;
 using FitTrack.Core.Usuarios;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +11,9 @@ namespace FitTrack.Tests;
 
 public class ServicioPermisosTests
 {
+    private static ServicioPermisos CrearServicio(ContextoBD db)
+        => new ServicioPermisos(db, new ServicioNotificaciones(db, new ServicioColaCorreo(db)));
+
     // Crea un ContextoBD con base de datos en memoria y un nombre único por llamada.
     // Así cada prueba es independiente y no comparten datos.
     private static ContextoBD CrearContexto()
@@ -50,7 +55,7 @@ public class ServicioPermisosTests
     {
         // Preparar
         using var db = CrearContexto();
-        var servicio = new ServicioPermisos(db);
+        var servicio = CrearServicio(db);
 
         var admin = CrearUsuario(db, 1, Rol.Administrador);
         var solicitante = CrearUsuario(db, 2, Rol.Estandar);
@@ -74,7 +79,7 @@ public class ServicioPermisosTests
     {
         // Preparar
         using var db = CrearContexto();
-        var servicio = new ServicioPermisos(db);
+        var servicio = CrearServicio(db);
 
         var admin = CrearUsuario(db, 1, Rol.Administrador);
         var solicitante = CrearUsuario(db, 2, Rol.Estandar);
@@ -95,7 +100,7 @@ public class ServicioPermisosTests
     {
         // Preparar
         using var db = CrearContexto();
-        var servicio = new ServicioPermisos(db);
+        var servicio = CrearServicio(db);
 
         var admin = CrearUsuario(db, 1, Rol.Administrador);
         // El admin es también el solicitante de la solicitud.
@@ -116,7 +121,7 @@ public class ServicioPermisosTests
     {
         // Preparar
         using var db = CrearContexto();
-        var servicio = new ServicioPermisos(db);
+        var servicio = CrearServicio(db);
 
         var admin = CrearUsuario(db, 1, Rol.Administrador);
         // El admin es también el solicitante de la solicitud.
@@ -140,7 +145,7 @@ public class ServicioPermisosTests
     {
         // Preparar
         using var db = CrearContexto();
-        var servicio = new ServicioPermisos(db);
+        var servicio = CrearServicio(db);
 
         var admin = CrearUsuario(db, 1, Rol.Administrador);
         var solicitante = CrearUsuario(db, 2, Rol.Estandar);
@@ -161,7 +166,7 @@ public class ServicioPermisosTests
     {
         // Preparar
         using var db = CrearContexto();
-        var servicio = new ServicioPermisos(db);
+        var servicio = CrearServicio(db);
 
         var admin = CrearUsuario(db, 1, Rol.Administrador);
         var solicitante = CrearUsuario(db, 2, Rol.Estandar);
@@ -185,7 +190,7 @@ public class ServicioPermisosTests
     {
         // Preparar
         using var db = CrearContexto();
-        var servicio = new ServicioPermisos(db);
+        var servicio = CrearServicio(db);
         var solicitante = CrearUsuario(db, 1, Rol.Estandar);
 
         // Actuar
@@ -206,7 +211,7 @@ public class ServicioPermisosTests
     {
         // Preparar
         using var db = CrearContexto();
-        var servicio = new ServicioPermisos(db);
+        var servicio = CrearServicio(db);
 
         var estandarA = CrearUsuario(db, 1, Rol.Estandar);
         var estandarB = CrearUsuario(db, 2, Rol.Estandar);
@@ -227,7 +232,7 @@ public class ServicioPermisosTests
     {
         // Preparar
         using var db = CrearContexto();
-        var servicio = new ServicioPermisos(db);
+        var servicio = CrearServicio(db);
 
         var admin = CrearUsuario(db, 1, Rol.Administrador);
         var solicitanteA = CrearUsuario(db, 2, Rol.Estandar);
@@ -255,7 +260,7 @@ public class ServicioPermisosTests
     {
         // Preparar
         using var db = CrearContexto();
-        var servicio = new ServicioPermisos(db);
+        var servicio = CrearServicio(db);
 
         var admin = CrearUsuario(db, 1, Rol.Administrador);
         var solicitante = CrearUsuario(db, 2, Rol.Estandar);
@@ -279,7 +284,7 @@ public class ServicioPermisosTests
     {
         // Preparar
         using var db = CrearContexto();
-        var servicio = new ServicioPermisos(db);
+        var servicio = CrearServicio(db);
 
         var solicitante = CrearUsuario(db, 1, Rol.Estandar);
         var solicitud = CrearSolicitud(db, solicitante.Id, EstadoSolicitud.Rechazada);
@@ -299,7 +304,7 @@ public class ServicioPermisosTests
     {
         // Preparar
         using var db = CrearContexto();
-        var servicio = new ServicioPermisos(db);
+        var servicio = CrearServicio(db);
 
         var solicitante = CrearUsuario(db, 1, Rol.Estandar);
         var solicitud = CrearSolicitud(db, solicitante.Id, EstadoSolicitud.Aprobada);

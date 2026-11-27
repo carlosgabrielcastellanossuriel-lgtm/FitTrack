@@ -224,9 +224,73 @@ El **Administrador inicial** se crea al arrancar la Api con `FITTRACK_ADMIN_CORR
 
 ## Correos: cómo funcionan
 
-La Api **nunca envía correos directamente**: deja cada mensaje como una fila *Pendiente* en la tabla `CorreosEnCola`. El proyecto `FitTrack.Enviador` toma los pendientes, los envía por SMTP y los marca como *Enviado*. Si un envío falla, el correo queda pendiente para la siguiente ejecución, y ejecutarlo varias veces no duplica envíos.
+La Api **nunca envía correos directamente**: deja cada mensaje como una fila *Pendiente* en la tabla `CorreosEnCola`. El proyecto `FitTrack.Enviador` toma los pendientes, los envía por SMTP y los marca como *Enviado*. Si un envío falla, incrementa `Intentos`, guarda `FechaUltimoIntento` y `UltimoError`, y tras un máximo de **3 intentos** marca el correo como *Fallido* para no reintentarlo más. Ejecutar el Enviador varias veces no duplica correos ya enviados.
 
-Por eso, para que el registro de usuarios y la recuperación de contraseña lleguen al correo, hay que ejecutar el Enviador con las variables SMTP configuradas.
+Por eso, para que el registro de usuarios, la recuperación de contraseña y las notificaciones por correo lleguen al destinatario, hay que ejecutar el Enviador con las variables SMTP configuradas.
+
+## Notificaciones
+
+El sistema genera notificaciones internas para el usuario (consultables desde la API) y, si el usuario tiene activada la preferencia de correo (`NotificarPorCorreo = true`, valor por defecto), también encola un correo en `CorreosEnCola`. El máximo de intentos de envío en la cola es **3**.
+
+### Eventos y cómo provocar cada uno
+
+1. **Nueva solicitud de permiso** (`POST /api/permisos`):
+   1. Inicia sesión como un usuario `Estandar`.
+   2. Envía `POST /api/permisos` con `{ "permiso": "ExportarDatos" }`.
+   3. Cada `Administrador` activo recibe una notificación `"Nueva solicitud de permiso"` y los usuarios `Estandar` no la reciben.
+2. **Solicitud aprobada o rechazada** (`POST /api/permisos/{id}/aprobar` o `POST /api/permisos/{id}/rechazar`):
+   1. Inicia sesión como `Administrador`.
+   2. Aprueba la solicitud con `POST /api/permisos/{id}/aprobar` o recházala con `POST /api/permisos/{id}/rechazar` enviando `{ "motivo": "..." }`.
+   3. Solo el solicitante recibe una notificación `"Solicitud aprobada"` o `"Solicitud rechazada"` (incluyendo el motivo cuando es rechazada).
+3. **Día excedido** (`POST /api/resumen/comida`):
+   1. Inicia sesión con un usuario que tenga perfil creado (`PUT /api/perfil`).
+   2. Registra una comida con `POST /api/resumen/comida` que haga superar cualquiera de las metas del día (`Calorias`, `Proteina`, `Carbohidratos` o `Grasas`).
+   3. El día pasa a `Excedido` y el usuario recibe una notificación `"Día excedido"` (y un correo en cola si no desactivó la preferencia). Si registra otra comida el mismo día no se genera una segunda notificación.
+
+### Endpoints de notificaciones y cola de correos
+
+| Método | Ruta | Acceso | Descripción |
+|---|---|---|---|
+| GET | `/api/notificaciones?soloNoLeidas=false` | Sesión | Lista las notificaciones propias (de la más nueva a la más vieja): `{ id, titulo, mensaje, leida, fechaCreacion }`. Con `?soloNoLeidas=true` devuelve solo las no leídas. |
+| POST | `/api/notificaciones/{id}/leer` | Sesión | Marca la notificación como leída (`200 OK` `{ "mensaje" }`). Si no existe o pertenece a otro usuario devuelve `400 BadRequest` `{ "mensaje": "Notificación no encontrada." }`. |
+| GET | `/api/notificaciones/preferencias` | Sesión | Devuelve si el usuario recibe correos por notificaciones: `{ "correo": true }`. |
+| PUT | `/api/notificaciones/preferencias` | Sesión | Activa o desactiva el envío por correo para notificaciones: `{ "correo": false }` → `200 OK` `{ "mensaje" }`. |
+| GET | `/api/correos` | Solo Administrador (`403` para Estándar) | Lista la cola de correos (del más nuevo al más viejo): `id`, `destinatario`, `asunto`, `estado` (`Pendiente`, `Enviado` o `Fallido`), `intentos`, `fechaCreacion`, `fechaEnvio`, `fechaUltimoIntento` y `ultimoError` (nunca devuelve el cuerpo). |
+
+### Procesador de la cola de correos
+
+* **Con Docker Compose:** el servicio `enviador` procesa la cola automáticamente cada 15 segundos. Puedes ver los envíos con:
+
+  ```powershell
+  docker compose logs enviador
+  ```
+
+* **Localmente con .NET:** ejecuta una pasada manual del procesador con:
+
+  ```powershell
+  dotnet run --project FitTrack.Enviador
+  ```
+
+### Cómo provocar un fallo de envío (máximo 3 intentos)
+
+1. En tu archivo `.env` local (sin subirlo ni usar credenciales reales), configura un servidor SMTP inalcanzable con valores de relleno:
+
+   ```env
+   SMTP_MODO=smtp
+   SMTP_HOST=localhost
+   SMTP_PUERTO=2525
+   SMTP_USUARIO=usuario_prueba@ejemplo.com
+   SMTP_CLAVE=clave_de_relleno
+   ```
+
+2. Recrea el contenedor del enviador para que tome las variables nuevas:
+
+   ```powershell
+   docker compose up -d --force-recreate enviador
+   ```
+
+3. Provoca una notificación (por ejemplo, creando una solicitud con `POST /api/permisos`).
+4. Tras aproximadamente un minuto (el enviador corre cada 15 segundos), consulta `GET /api/correos` como `Administrador`: verás el correo con `estado: "Fallido"`, `intentos: 3`, `fechaUltimoIntento` y el detalle del error en `ultimoError`, y no se volverá a intentar.
 
 ## Reglas de seguridad
 
@@ -414,7 +478,7 @@ Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el
 | Administración de usuarios | Implementado |
 | Gestión de permisos | Implementado |
 | Manejador de documentos (subir, listar, descargar, eliminar) | Implementado (`/api/documentos`, metadatos en la tabla `Documentos` y archivos en disco) |
-| Cola y envío de correos | Implementado (el Enviador corre en el contenedor; con `SMTP_MODO=consola` los correos se leen con `docker compose logs enviador`) |
+| Cola de correos | Implementado (reintentos hasta un máximo de 3; estados `Pendiente`, `Enviado` y `Fallido`; consulta administrativa en `GET /api/correos`; el Enviador corre en el contenedor o con `dotnet run --project FitTrack.Enviador`) |
 | Perfil y cálculo de metas | Implementado |
 | ResumenDiario y máquina de estados | Implementado (registrar comida y cerrar día) |
 | Catálogo de alimentos (`Alimento`) | Implementado (`POST /api/alimentos`, solo Administrador) |
@@ -423,7 +487,7 @@ Todas requieren sesión (`Authorization: Bearer <token>`). Los cuerpos van en el
 | Historial de resúmenes | Implementado (`GET /api/resumen/historial`, permiso `VerEstadisticas`) |
 | Promedios semanal y mensual | Implementado |
 | API externa (USDA) | Implementado (`POST /api/alimentos/importar`) |
-| Notificaciones de alerta y dashboard | Implementado (las alertas se muestran con la etiqueta "Excedido", sin correos) |
+| Notificaciones | Implementado (`/api/notificaciones` con preferencias por usuario; el día `Excedido` y las solicitudes de permiso generan una notificación interna y un correo por la cola, que se puede desactivar) |
 | Frontend web (`FitTrack.Web`) | Implementado (React, Vite, Tailwind v4, React Router y Recharts) |
 | Contenedor Docker | Implementado (`docker compose up --build`) |
 

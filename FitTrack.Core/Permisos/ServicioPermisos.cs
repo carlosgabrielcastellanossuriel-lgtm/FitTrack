@@ -1,4 +1,5 @@
 using FitTrack.Core.Datos;
+using FitTrack.Core.Notificaciones;
 using FitTrack.Core.Usuarios;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,10 +8,12 @@ namespace FitTrack.Core.Permisos;
 public class ServicioPermisos
 {
     private readonly ContextoBD _db;
+    private readonly ServicioNotificaciones _notificaciones;
 
-    public ServicioPermisos(ContextoBD db)
+    public ServicioPermisos(ContextoBD db, ServicioNotificaciones notificaciones)
     {
         _db = db;
+        _notificaciones = notificaciones;
     }
 
     // ---------- CREAR SOLICITUD (RF-GP-01) ----------
@@ -30,6 +33,10 @@ public class ServicioPermisos
 
         _db.SolicitudesPermiso.Add(solicitud);
         await _db.SaveChangesAsync();
+
+        await _notificaciones.NotificarAdministradoresAsync(
+            "Nueva solicitud de permiso",
+            $"{solicitante.Correo} solicitó el permiso {permiso}.");
 
         return Resultado.Ok("Solicitud de permiso creada.");
     }
@@ -85,6 +92,11 @@ public class ServicioPermisos
         // Un solo guardado al final con todo.
         await _db.SaveChangesAsync();
 
+        await _notificaciones.NotificarAsync(
+            solicitud.SolicitanteId,
+            "Solicitud aprobada",
+            $"Tu solicitud del permiso {solicitud.Permiso} fue aprobada.");
+
         return Resultado.Ok("Permiso aprobado y aplicado.");
     }
 
@@ -112,6 +124,11 @@ public class ServicioPermisos
         solicitud.MotivoRechazo = motivo;
 
         await _db.SaveChangesAsync();
+
+        await _notificaciones.NotificarAsync(
+            solicitud.SolicitanteId,
+            "Solicitud rechazada",
+            $"Tu solicitud del permiso {solicitud.Permiso} fue rechazada. Motivo: {motivo}");
 
         return Resultado.Ok("Solicitud rechazada.");
     }
