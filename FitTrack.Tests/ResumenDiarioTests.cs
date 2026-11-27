@@ -1,5 +1,7 @@
 using System.Runtime.CompilerServices;
+using FitTrack.Core.Correos;
 using FitTrack.Core.Datos;
+using FitTrack.Core.Notificaciones;
 using FitTrack.Core.Permisos;
 using FitTrack.Core.Usuarios;
 using FitTrack.Negocio.Perfiles;
@@ -11,6 +13,12 @@ namespace FitTrack.Tests;
 
 public class ResumenDiarioTests
 {
+    private static ServicioPermisos CrearServicioPermisos(ContextoBD db)
+        => new ServicioPermisos(db, new ServicioNotificaciones(db, new ServicioColaCorreo(db)));
+
+    private static ServicioResumen CrearServicioResumen(ContextoBD db, ServicioPermisos permisos)
+        => new ServicioResumen(db, permisos, new ServicioNotificaciones(db, new ServicioColaCorreo(db)));
+
     // Registra ResumenDiario como tabla del contexto antes de que corran las pruebas.
     [ModuleInitializer]
     public static void RegistrarEntidadesNegocio() { ContextoBD.EntidadesNegocio.Add(typeof(ResumenDiario)); }
@@ -206,10 +214,10 @@ public class ResumenDiarioTests
         Usuario admin = CrearUsuario(db, 1, Rol.Administrador);
         Usuario estandar = CrearUsuario(db, 2, Rol.Estandar);
 
-        ServicioPermisos permisos = new ServicioPermisos(db);
+        ServicioPermisos permisos = CrearServicioPermisos(db);
         await permisos.CrearAsync(estandar, Permiso.VerEstadisticas);   // queda pendiente, sin aprobar
 
-        ServicioResumen resumen = new ServicioResumen(db, permisos);
+        ServicioResumen resumen = CrearServicioResumen(db, permisos);
 
         // Actuar
         List<ResumenDiario>? historial = await resumen.HistorialAsync(estandar);
@@ -226,13 +234,13 @@ public class ResumenDiarioTests
         Usuario admin = CrearUsuario(db, 1, Rol.Administrador);
         Usuario estandar = CrearUsuario(db, 2, Rol.Estandar);
 
-        ServicioPermisos permisos = new ServicioPermisos(db);
+        ServicioPermisos permisos = CrearServicioPermisos(db);
         await permisos.CrearAsync(estandar, Permiso.VerEstadisticas);
 
         int idSolicitud = db.SolicitudesPermiso.First().Id;
         await permisos.AprobarAsync(idSolicitud, admin);
 
-        ServicioResumen resumen = new ServicioResumen(db, permisos);
+        ServicioResumen resumen = CrearServicioResumen(db, permisos);
 
         // Actuar
         List<ResumenDiario>? historial = await resumen.HistorialAsync(estandar);
@@ -248,10 +256,10 @@ public class ResumenDiarioTests
         ContextoBD db = CrearContexto();
         Usuario estandar = CrearUsuario(db, 1, Rol.Estandar);
 
-        ServicioPermisos permisos = new ServicioPermisos(db);
+        ServicioPermisos permisos = CrearServicioPermisos(db);
         await permisos.CrearAsync(estandar, Permiso.VerEstadisticas);   // queda pendiente, sin aprobar
 
-        ServicioResumen resumen = new ServicioResumen(db, permisos);
+        ServicioResumen resumen = CrearServicioResumen(db, permisos);
 
         // Actuar
         PromedioPeriodo? promedio = await resumen.PromedioAsync(estandar, 7);
@@ -268,7 +276,7 @@ public class ResumenDiarioTests
         Usuario admin = CrearUsuario(db, 1, Rol.Administrador);
         Usuario estandar = CrearUsuario(db, 2, Rol.Estandar);
 
-        ServicioPermisos permisos = new ServicioPermisos(db);
+        ServicioPermisos permisos = CrearServicioPermisos(db);
         await permisos.CrearAsync(estandar, Permiso.VerEstadisticas);
 
         int idSolicitud = db.SolicitudesPermiso.First().Id;
@@ -290,7 +298,7 @@ public class ResumenDiarioTests
 
         await db.SaveChangesAsync();
 
-        ServicioResumen resumen = new ServicioResumen(db, permisos);
+        ServicioResumen resumen = CrearServicioResumen(db, permisos);
 
         // Actuar
         PromedioPeriodo? promedio = await resumen.PromedioAsync(estandar, 7);
@@ -309,7 +317,7 @@ public class ResumenDiarioTests
         Usuario admin = CrearUsuario(db, 1, Rol.Administrador);
         Usuario estandar = CrearUsuario(db, 2, Rol.Estandar);
 
-        ServicioPermisos permisos = new ServicioPermisos(db);
+        ServicioPermisos permisos = CrearServicioPermisos(db);
         await permisos.CrearAsync(estandar, Permiso.VerEstadisticas);
 
         int idSolicitud = db.SolicitudesPermiso.First().Id;
@@ -333,7 +341,7 @@ public class ResumenDiarioTests
 
         await db.SaveChangesAsync();
 
-        ServicioResumen resumen = new ServicioResumen(db, permisos);
+        ServicioResumen resumen = CrearServicioResumen(db, permisos);
 
         // Actuar
         PromedioPeriodo? promedio = await resumen.PromedioAsync(estandar, 7);
@@ -352,13 +360,13 @@ public class ResumenDiarioTests
         Usuario admin = CrearUsuario(db, 1, Rol.Administrador);
         Usuario estandar = CrearUsuario(db, 2, Rol.Estandar);
 
-        ServicioPermisos permisos = new ServicioPermisos(db);
+        ServicioPermisos permisos = CrearServicioPermisos(db);
         await permisos.CrearAsync(estandar, Permiso.VerEstadisticas);
 
         int idSolicitud = db.SolicitudesPermiso.First().Id;
         await permisos.AprobarAsync(idSolicitud, admin);
 
-        ServicioResumen resumen = new ServicioResumen(db, permisos);
+        ServicioResumen resumen = CrearServicioResumen(db, permisos);
 
         // Actuar
         PromedioPeriodo? promedio = await resumen.PromedioAsync(estandar, 7);

@@ -48,9 +48,12 @@ int enviados = 0;
 foreach (CorreoEnCola correo in pendientes)
 {
     // try/catch: si un envío falla (servidor caído, clave mala, sin internet),
-    // el programa no se cae. El correo queda Pendiente para la próxima vez.
+    // el programa no se cae. Reintenta hasta MaxIntentos veces antes de marcarlo Fallido.
     try
     {
+        correo.Intentos++;
+        correo.FechaUltimoIntento = DateTime.UtcNow;
+
         if (modoConsola)
         {
             // Modo consola: no se envía nada, el correo se imprime para verlo en los logs.
@@ -79,6 +82,11 @@ foreach (CorreoEnCola correo in pendientes)
     }
     catch (Exception ex)
     {
+        correo.UltimoError = ex.Message;
+        if (correo.Intentos >= CorreoEnCola.MaxIntentos)
+            correo.Estado = EstadoCorreo.Fallido;
+
+        db.SaveChanges();
         Console.WriteLine($"No se pudo enviar el correo {correo.Id}: {ex.Message}");
     }
 }

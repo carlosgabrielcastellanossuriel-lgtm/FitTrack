@@ -1,5 +1,6 @@
 ﻿using FitTrack.Core.Correos;
 using FitTrack.Core.Documentos;
+using FitTrack.Core.Notificaciones;
 using FitTrack.Core.Permisos;
 using FitTrack.Core.Usuarios;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,7 @@ public class ContextoBD : DbContext
     public DbSet<PermisoUsuario> PermisosUsuario => Set<PermisoUsuario>();
 
     public DbSet<Documento> Documentos => Set<Documento>();
+    public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
 
     // Entidades de otros proyectos (como Negocio) que Core no puede ver directamente.
     // La Api las agrega al arrancar y aquí se registran como tablas.
@@ -41,6 +43,7 @@ public class ContextoBD : DbContext
             // Índice único: la BASE DE DATOS rechaza dos usuarios con el mismo correo (RF-CA-01).
             // Es una segunda barrera además de la revisión que hace el código.
             e.HasIndex(u => u.Correo).IsUnique();
+            e.Property(u => u.NotificarPorCorreo).HasDefaultValue(true);
         });
 
         modelBuilder.Entity<TokenActivacion>(e =>

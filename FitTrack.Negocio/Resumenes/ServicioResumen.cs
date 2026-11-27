@@ -1,4 +1,5 @@
 using FitTrack.Core.Datos;
+using FitTrack.Core.Notificaciones;
 using FitTrack.Core.Permisos;
 using FitTrack.Core.Usuarios;
 using FitTrack.Negocio.Alimentos;
@@ -11,11 +12,13 @@ public class ServicioResumen
 {
     private readonly ContextoBD _db;
     private readonly ServicioPermisos _permisos;
+    private readonly ServicioNotificaciones _notificaciones;
 
-    public ServicioResumen(ContextoBD db, ServicioPermisos permisos)
+    public ServicioResumen(ContextoBD db, ServicioPermisos permisos, ServicioNotificaciones notificaciones)
     {
         _db = db;
         _permisos = permisos;
+        _notificaciones = notificaciones;
     }
 
     // Registra una comida de un alimento (en gramos) en el resumen del día.
@@ -63,6 +66,7 @@ public class ServicioResumen
         double grasas = alimento.GrasasPor100g * gramos / 100;
 
         // 6. El resumen suma la comida y recalcula su estado.
+        EstadoResumen estadoAnterior = resumen.EstadoActual;
         if (!resumen.RegistrarComida(calorias, proteinas, carbohidratos, grasas, perfil))
             return Resultado.Error("El día está cerrado.");
 
@@ -81,6 +85,14 @@ public class ServicioResumen
         // 8. Se guarda todo junto: el registro y el resumen van en el mismo SaveChangesAsync,
         // así nunca queda una cosa sin la otra.
         await _db.SaveChangesAsync();
+
+        if (estadoAnterior != EstadoResumen.Excedido && resumen.EstadoActual == EstadoResumen.Excedido)
+        {
+            await _notificaciones.NotificarAsync(
+                usuarioId,
+                "Día excedido",
+                "Superaste una de tus metas de hoy.");
+        }
 
         return Resultado.Ok($"Comida registrada. Estado del día: {resumen.EstadoActual}.");
     }

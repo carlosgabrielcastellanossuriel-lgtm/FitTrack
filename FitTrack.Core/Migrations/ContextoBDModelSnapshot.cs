@@ -53,6 +53,15 @@ namespace FitTrack.Core.Migrations
                     b.Property<DateTime?>("FechaEnvio")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("FechaUltimoIntento")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Intentos")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UltimoError")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.ToTable("CorreosEnCola");
@@ -95,6 +104,38 @@ namespace FitTrack.Core.Migrations
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("Documentos");
+                });
+
+            modelBuilder.Entity("FitTrack.Core.Notificaciones.Notificacion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Leida")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Mensaje")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Titulo")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("UsuarioId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
+
+                    b.ToTable("Notificaciones");
                 });
 
             modelBuilder.Entity("FitTrack.Core.Permisos.PermisoUsuario", b =>
@@ -280,6 +321,11 @@ namespace FitTrack.Core.Migrations
                     b.Property<int>("IntentosFallidos")
                         .HasColumnType("int");
 
+                    b.Property<bool>("NotificarPorCorreo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
                     b.Property<int>("Rol")
                         .HasColumnType("int");
 
@@ -447,6 +493,17 @@ namespace FitTrack.Core.Migrations
                 });
 
             modelBuilder.Entity("FitTrack.Core.Documentos.Documento", b =>
+                {
+                    b.HasOne("FitTrack.Core.Usuarios.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("FitTrack.Core.Notificaciones.Notificacion", b =>
                 {
                     b.HasOne("FitTrack.Core.Usuarios.Usuario", "Usuario")
                         .WithMany()

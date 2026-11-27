@@ -1,6 +1,7 @@
 using FitTrack.Core.Correos;
 using FitTrack.Core.Datos;
 using FitTrack.Core.Documentos;
+using FitTrack.Core.Notificaciones;
 using FitTrack.Core.Permisos;
 using FitTrack.Core.Usuarios;
 using FitTrack.Negocio.Alimentos;
@@ -19,6 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<ContextoBD>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<ServicioColaCorreo>();
+builder.Services.AddScoped<ServicioNotificaciones>();
 builder.Services.AddScoped<ServicioRegistro>();
 builder.Services.AddScoped<ServicioSesion>();
 builder.Services.AddScoped<ServicioContrasena>();
