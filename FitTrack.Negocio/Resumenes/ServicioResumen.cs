@@ -177,6 +177,44 @@ public class ServicioResumen
         return promedio;
     }
 
+    // Cuenta los días agrupados por estado y promedia sus calorías.
+    // El Administrador ve los días de todos; cualquier otro usuario solo los suyos.
+    // Este reporte no exige el permiso VerEstadisticas.
+    public async Task<List<DiasPorEstado>> DiasPorEstadoAsync(Usuario consultante, DateOnly? desde, DateOnly? hasta)
+    {
+        IQueryable<ResumenDiario> consulta = _db.Set<ResumenDiario>().AsNoTracking();
+
+        if (desde.HasValue)
+            consulta = consulta.Where(r => r.Fecha >= desde.Value);
+
+        if (hasta.HasValue)
+            consulta = consulta.Where(r => r.Fecha <= hasta.Value);
+
+        if (consultante.Rol != Rol.Administrador)
+            consulta = consulta.Where(r => r.UsuarioId == consultante.Id);
+
+        // La base de datos agrupa y calcula Count y Average; solo llega una fila por estado.
+        var filas = await consulta
+            .GroupBy(r => r.EstadoActual)
+            .Select(g => new
+            {
+                Estado = g.Key,
+                Dias = g.Count(),
+                Promedio = g.Average(r => r.CaloriasAcumuladas)
+            })
+            .ToListAsync();
+
+        // El redondeo a 1 decimal se hace sobre el promedio ya calculado.
+        return filas
+            .Select(f => new DiasPorEstado
+            {
+                Estado = f.Estado,
+                Dias = f.Dias,
+                PromedioCalorias = Math.Round(f.Promedio, 1)
+            })
+            .ToList();
+    }
+
     // Devuelve el resumen de hoy, el perfil y las comidas registradas, todo junto.
     // Si el usuario no tiene resumen de hoy o no tiene perfil, devuelve null.
     public async Task<DatosDia?> ObtenerHoyAsync(int usuarioId)
@@ -233,4 +271,12 @@ public class PromedioPeriodo
     public double Proteinas { get; set; }
     public double Carbohidratos { get; set; }
     public double Grasas { get; set; }
+}
+
+// Una fila del reporte de días: un estado, cuántos días tuvo y su promedio de calorías.
+public class DiasPorEstado
+{
+    public EstadoResumen Estado { get; set; }
+    public int Dias { get; set; }
+    public double PromedioCalorias { get; set; }
 }
