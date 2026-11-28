@@ -1,4 +1,5 @@
 ﻿using FitTrack.Core.Datos;
+using FitTrack.Core.Usuarios;
 
 namespace FitTrack.Core.Correos;
 
@@ -17,6 +18,11 @@ public class ServicioColaCorreo
 
     public async Task EncolarAsync(string destinatario, string asunto, string cuerpo)
     {
+        // Un destinatario inválido no se encola: el Enviador lo reintentaría
+        // tres veces sin posibilidad de éxito. La notificación interna no se pierde.
+        if (!Validaciones.CorreoValido(destinatario))
+            return;
+
         // Se crea el objeto con los datos del correo.
         // Estado queda "Pendiente" y FechaCreacion con la hora actual
         // por los valores iniciales de la entidad.

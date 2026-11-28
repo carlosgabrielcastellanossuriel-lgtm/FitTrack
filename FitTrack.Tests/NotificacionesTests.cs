@@ -118,6 +118,26 @@ public class NotificacionesTests
         Assert.Equal(EstadoCorreo.Pendiente, correo.Estado);
     }
 
+    // H-02 (RF-NOT-06, RF-NOT-10): un destinatario inválido no se encola,
+    // pero la notificación interna sí se guarda.
+    [Fact]
+    public async Task H_02_NotificacionConCorreoInvalido_NoEncolaCorreo()
+    {
+        // Preparar
+        using var db = CrearContexto();
+        var usuario = CrearUsuario(db, 1, Rol.Estandar, activo: true);
+        usuario.Correo = "no-es-correo";
+        await db.SaveChangesAsync();
+        var servicio = CrearServicioNotificaciones(db);
+
+        // Actuar
+        await servicio.NotificarAsync(usuario.Id, "Aviso", "Mensaje de prueba");
+
+        // Verificar
+        Assert.Single(await db.Notificaciones.Where(n => n.UsuarioId == usuario.Id).ToListAsync());
+        Assert.Empty(await db.CorreosEnCola.ToListAsync());
+    }
+
     [Fact]
     public async Task RF_NOT_03_DiaExcedido_NotificaUnaSolaVezPorDia()
     {

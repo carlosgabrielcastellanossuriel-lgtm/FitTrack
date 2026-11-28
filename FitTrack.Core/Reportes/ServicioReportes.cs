@@ -20,6 +20,10 @@ public class ServicioReportes
     // El Administrador ve todas; cualquier otro usuario solo ve las suyas.
     public async Task<List<SolicitudesPorEstado>> SolicitudesPorEstadoAsync(Usuario consultante, DateOnly? desde, DateOnly? hasta)
     {
+        // La regla vive en el servicio, no solo en el controlador (RD-02).
+        if (desde.HasValue && hasta.HasValue && desde.Value > hasta.Value)
+            throw new ArgumentException("La fecha desde no puede ser mayor que hasta.");
+
         IQueryable<SolicitudPermiso> consulta = _db.SolicitudesPermiso.AsNoTracking();
 
         // El día "desde" entra desde las 00:00 y el día "hasta" entra completo.
@@ -31,8 +35,10 @@ public class ServicioReportes
 
         if (hasta.HasValue)
         {
-            DateTime fin = hasta.Value.AddDays(1).ToDateTime(TimeOnly.MinValue);
-            consulta = consulta.Where(s => s.FechaCreacion < fin);
+            // Se usa el último instante del día en vez de AddDays(1): así
+            // hasta = 9999-12-31 (DateOnly.MaxValue) no desborda el DateTime.
+            DateTime fin = hasta.Value.ToDateTime(TimeOnly.MaxValue);
+            consulta = consulta.Where(s => s.FechaCreacion <= fin);
         }
 
         if (consultante.Rol != Rol.Administrador)
