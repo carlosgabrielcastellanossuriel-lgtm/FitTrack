@@ -182,6 +182,10 @@ public class ServicioResumen
     // Este reporte no exige el permiso VerEstadisticas.
     public async Task<List<DiasPorEstado>> DiasPorEstadoAsync(Usuario consultante, DateOnly? desde, DateOnly? hasta)
     {
+        // La regla vive en el servicio, no solo en el controlador (RD-02).
+        if (desde.HasValue && hasta.HasValue && desde.Value > hasta.Value)
+            throw new ArgumentException("La fecha desde no puede ser mayor que hasta.");
+
         IQueryable<ResumenDiario> consulta = _db.Set<ResumenDiario>().AsNoTracking();
 
         if (desde.HasValue)

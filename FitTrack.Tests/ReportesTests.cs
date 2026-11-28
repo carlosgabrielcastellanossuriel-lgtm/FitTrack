@@ -151,6 +151,26 @@ public class ReportesTests
         Assert.Equal(1, filas[0].Total);
     }
 
+    // H-03 (RD-02, RF-REP-05): el rango invertido se rechaza en los servicios,
+    // no solo en el controlador.
+    [Fact]
+    public async Task H_03_RangoInvertido_LosDosServiciosDeReporteLoRechazan()
+    {
+        // Preparar
+        using var db = CrearContexto();
+        var admin = CrearUsuario(db, 1, Rol.Administrador);
+        var reportes = new ServicioReportes(db);
+        var resumen = CrearServicioResumen(db);
+        DateOnly desde = new DateOnly(2026, 11, 30);
+        DateOnly hasta = new DateOnly(2026, 11, 1);
+
+        // Actuar y verificar
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => reportes.SolicitudesPorEstadoAsync(admin, desde, hasta));
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => resumen.DiasPorEstadoAsync(admin, desde, hasta));
+    }
+
     [Fact]
     public async Task RF_REP_02_Y_03_DiasPorEstado_AgrupaYDevuelveMenosFilasQueResumenes()
     {
