@@ -552,7 +552,7 @@ Ejecuta las pruebas unitarias con:
 dotnet test FitTrack.Tests
 ```
 
-No necesita base de datos ni la API levantada: son pruebas unitarias sobre `FitTrack.Core` y `FitTrack.Negocio`.
+No necesita base de datos ni la API levantada: son pruebas unitarias sobre `FitTrack.Core` y `FitTrack.Negocio`. La suite incluye las pruebas de regresión de la Asignación 3: `H_01_HastaFechaMaxima_NoLanzaYIncluyeElDia`, `H_02_NotificacionConCorreoInvalido_NoEncolaCorreo` y `H_03_RangoInvertido_LosDosServiciosDeReporteLoRechazan`.
 
 Las pruebas de la importación desde USDA (`FitTrack.Tests/UsdaTests.cs`) usan un `HttpMessageHandler` falso, así que tampoco necesitan internet ni una clave real:
 

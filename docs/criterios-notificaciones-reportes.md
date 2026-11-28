@@ -115,3 +115,27 @@ Cada criterio se puede comprobar con Swagger o PowerShell sin preguntarle a nadi
 - Cuando se consultan con rangos distintos (?desde=2026-11-01&hasta=2026-11-15 y ?desde=2026-11-16&hasta=2026-11-30).
 - Entonces los resultados son distintos. Si desde es mayor que hasta responde 400.
 - Comprobar: consultar ambos reportes con los dos rangos.
+
+---
+
+## Casos borde agregados en la Asignación 3
+
+Estos casos no estaban en los criterios originales y se agregaron después de la auditoría.
+
+### H-01 — RF-REP-05
+- Dado el reporte de solicitudes con `hasta=9999-12-31` (el máximo de `DateOnly`).
+- Cuando se consulta.
+- Entonces responde 200, incluye el día completo y no lanza un error de desbordamiento.
+- Comprobar: `GET /api/reportes/solicitudes-permiso?hasta=9999-12-31` y la prueba `H_01_HastaFechaMaxima_NoLanzaYIncluyeElDia`.
+
+### H-02 — RF-NOT-06 y RF-NOT-10
+- Dado un usuario con un correo con formato inválido.
+- Cuando recibe una notificación.
+- Entonces la notificación interna se guarda, no se agrega ninguna fila a `CorreosEnCola` y el Enviador no reintenta ese destinatario.
+- Comprobar: la prueba `H_02_NotificacionConCorreoInvalido_NoEncolaCorreo` y `GET /api/correos` como Administrador.
+
+### H-03 — RD-02 y RF-REP-05
+- Dado un rango con `desde` mayor que `hasta`.
+- Cuando se llama directamente a `ServicioReportes.SolicitudesPorEstadoAsync` o a `ServicioResumen.DiasPorEstadoAsync`.
+- Entonces el servicio rechaza el rango; la regla no vive solo en el controlador.
+- Comprobar: la prueba `H_03_RangoInvertido_LosDosServiciosDeReporteLoRechazan`.

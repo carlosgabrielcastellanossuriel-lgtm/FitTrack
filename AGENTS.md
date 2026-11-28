@@ -32,6 +32,11 @@ Dependencias: Api usa Core y Negocio; Negocio usa Core; Enviador usa Core; Core 
 - Nunca trabajar en main: cada tarea empieza creando su rama.
 - No hacer commit ni push. Un pull request es una funcionalidad.
 
+## Lecciones de la Asignación 3 (auditoría)
+- Antes de encolar un correo, validar el destinatario con `Validaciones.CorreoValido`. Un destinatario inválido no se encola ni se reintenta.
+- En filtros de fecha, no usar `AddDays(1)` sin proteger `DateOnly.MaxValue`; usar `<= hasta.ToDateTime(TimeOnly.MaxValue)`.
+- Las reglas de rango de fechas (`desde <= hasta`) viven en el servicio; el controlador solo traduce el error a 400.
+
 ## Restricciones
 - No editar a mano migraciones existentes, archivos Designer ni ContextoBDModelSnapshot: solo generar migraciones nuevas con dotnet ef.
 - No tocar FitTrack.Web, docker-compose.yml ni Dockerfile salvo que la tarea lo pida.
