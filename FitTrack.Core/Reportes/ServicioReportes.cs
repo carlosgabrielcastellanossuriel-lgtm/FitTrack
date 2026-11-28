@@ -31,8 +31,10 @@ public class ServicioReportes
 
         if (hasta.HasValue)
         {
-            DateTime fin = hasta.Value.AddDays(1).ToDateTime(TimeOnly.MinValue);
-            consulta = consulta.Where(s => s.FechaCreacion < fin);
+            // Se usa el último instante del día en vez de AddDays(1): así
+            // hasta = 9999-12-31 (DateOnly.MaxValue) no desborda el DateTime.
+            DateTime fin = hasta.Value.ToDateTime(TimeOnly.MaxValue);
+            consulta = consulta.Where(s => s.FechaCreacion <= fin);
         }
 
         if (consultante.Rol != Rol.Administrador)

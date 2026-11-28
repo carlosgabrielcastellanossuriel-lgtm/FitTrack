@@ -131,6 +131,26 @@ public class ReportesTests
         Assert.NotEqual(primeraQuincena.Sum(f => f.Total), segundaQuincena.Sum(f => f.Total));
     }
 
+    // H-01 (RF-REP-05): el día "hasta" se incluye completo y el límite máximo
+    // de DateOnly no debe desbordar AddDays(1).
+    [Fact]
+    public async Task H_01_HastaFechaMaxima_NoLanzaYIncluyeElDia()
+    {
+        // Preparar
+        using var db = CrearContexto();
+        var admin = CrearUsuario(db, 1, Rol.Administrador);
+        CrearSolicitud(db, admin.Id, EstadoSolicitud.Pendiente, new DateTime(9999, 12, 31, 12, 0, 0, DateTimeKind.Utc));
+        await db.SaveChangesAsync();
+        var servicio = new ServicioReportes(db);
+
+        // Actuar
+        var filas = await servicio.SolicitudesPorEstadoAsync(admin, null, DateOnly.MaxValue);
+
+        // Verificar
+        Assert.Single(filas);
+        Assert.Equal(1, filas[0].Total);
+    }
+
     [Fact]
     public async Task RF_REP_02_Y_03_DiasPorEstado_AgrupaYDevuelveMenosFilasQueResumenes()
     {
